@@ -23,7 +23,7 @@ class Player:
         shots_taken = 0
 
         # Adjust the number of iterations for regular or overtime
-        num_iterations = 2 if not overtime else 1
+        num_iterations = 5 if not overtime else 1
 
         for _ in range(num_iterations):
             # Calculate scoring chance based on the saves per game of both teams
@@ -34,9 +34,9 @@ class Player:
             team2_assists_per_game = sum(player.assists_per_game for player in team2.players)
 
             if self.team_name == team1.name:
-                scoring_chance = (self.shooting_percentage + self.shots_per_game * .04 + self.goals_per_game * .04 + ((team1_assists_per_game / 9) * .05)) - (self.uncertainty * .4)  - ((team2_saves_per_game / 9) * .05)
+                scoring_chance = (self.shooting_percentage + ((team1_assists_per_game / 9) * .05)) - (self.uncertainty * .5)  - ((team2_saves_per_game / 9) * .04)
             elif self.team_name == team2.name:
-                scoring_chance = (self.shooting_percentage + self.shots_per_game * .04 + self.goals_per_game * .04 + ((team2_assists_per_game / 9) * .05)) - (self.uncertainty * .4)  - ((team1_saves_per_game / 9) * .05)
+                scoring_chance = (self.shooting_percentage + ((team2_assists_per_game / 9) * .05)) - (self.uncertainty * .5)  - ((team1_saves_per_game / 9) * .04)
             else:
                 raise ValueError("Player's team is not one of the provided teams.")
 
@@ -243,6 +243,7 @@ def simulate_tournament_multiple_times(teams, num_simulations):
 
                 # Determine the winner of the series
                 winners.append(series_winner)
+                # Print the winner of the tournament
 
                 print("=-" * 40)
 
@@ -253,7 +254,7 @@ def simulate_tournament_multiple_times(teams, num_simulations):
         # Count the teams that made it to each round
         for team in teams:
             if team in current_teams:
-                if round_num == 2:
+                if round_num == 2:  # Updated to round_num == 2 to capture teams making it to Round 2
                     round2_counts[team.name] += 1
                 elif round_num == 3:
                     round3_counts[team.name] += 1
@@ -261,9 +262,13 @@ def simulate_tournament_multiple_times(teams, num_simulations):
         # Count tournament wins
         tournament_wins[current_teams[0].name] += 1
 
+    # Calculate total potential occurrences for each round
+    total_round2_occurrences = num_simulations * len(teams) // 2
+    total_round3_occurrences = num_simulations * len(teams) // 4  # Assuming a power of 2 for the number of teams
+
     # Calculate percentages
-    round2_percentages = {team: (count / num_simulations) * 100 for team, count in round2_counts.items()}
-    round3_percentages = {team: (count / num_simulations) * 100 for team, count in round3_counts.items()}
+    round2_percentages = {team: (count / total_round2_occurrences) * 100 for team, count in round2_counts.items()}
+    round3_percentages = {team: (count / total_round3_occurrences) * 100 for team, count in round3_counts.items()}
     tournament_win_percentages = {team: (count / num_simulations) * 100 for team, count in tournament_wins.items()}
 
     # Print the results
@@ -277,10 +282,11 @@ def simulate_tournament_multiple_times(teams, num_simulations):
 
     print("\nPercentage of Tournament Wins:")
     for team, percentage in tournament_win_percentages.items():
-        print(f"{team}: {percentage:.2f}%")
+        num_wins = tournament_wins[team]
+        print(f"{team}: {percentage:.2f}% ({num_wins} tournaments won)")
 
 # Read players from CSV file
-players = read_players_from_csv('C:/Users/nycdoe/PycharmProjects/Simulation/Players.csv')
+players = read_players_from_csv('C:/Users/Maxim/PycharmProjects/Simulation/Players.csv')
 
 # Get unique team names
 team_names = set(player.team_name for player in players)

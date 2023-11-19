@@ -1,40 +1,61 @@
 Player Name,Goals Per Game,Assists Per Game,Saves Per Game,Shots Per Game,Uncertainty Factor,Team Name
-Atomic,0.66,0.65,1.61,2.77,0.27,G2 Esports
-Beastmode,0.72,0.57,2.02,3.04,0.15,G2 Esports
-Daniel,0.78,0.53,2.03,3.13,0.25,G2 Esports
-Alpha54,0.82,0.51,2.08,3.84,0.20,Team Vitality
-Zen,0.83,0.64,2.05,3.18,0.10,Team Vitality
-Radosin,0.73,0.52,2.07,2.93,0.24,Team Vitality
+Atomic,0.66,0.65,1.61,2.77,0.24,G2 Esports
+Beastmode,0.72,0.57,2.02,3.04,0.12,G2 Esports
+Daniel,0.78,0.53,2.03,3.13,0.19,G2 Esports
+Alpha54,0.82,0.51,2.08,3.84,0.18,Team Vitality
+Zen,0.83,0.64,2.05,3.18,0.08,Team Vitality
+Radosin,0.73,0.52,2.07,2.93,0.23,Team Vitality
 Vatira,0.79,0.59,1.85,3.04,0.09,Karmine Corp
-Rise,0.78,0.56,1.35,3.15,0.18,Karmine Corp
-Atow,0.78,0.66,1.59,3.23,0.23,Karmine Corp
-Yanxnz,0.84,0.65,1.51,3.29,0.24,Furia Esports
-Drufinho,0.81,0.56,1.59,3.05,0.27,Furia Esports
-Lostt,0.81,0.57,1.76,3.24,0.27,Furia Esports
-2Piece,0.74,0.62,2.17,2.79,0.30,Shopify Rebellion
-Paarth,0.75,0.61,1.71,2.85,0.35,Shopify Rebellion
-JSTN,0.85,0.61,1.83,3.39,0.27,Shopify Rebellion
+Rise,0.78,0.56,1.35,3.15,0.17,Karmine Corp
+Atow,0.78,0.66,1.59,3.23,0.22,Karmine Corp
+Yanxnz,0.84,0.65,1.51,3.29,0.18,Furia Esports
+Drufinho,0.81,0.56,1.59,3.05,0.23,Furia Esports
+Lostt,0.81,0.57,1.76,3.24,0.23,Furia Esports
+2Piece,0.74,0.62,2.17,2.79,0.27,Shopify Rebellion
+Paarth,0.75,0.61,1.71,2.85,0.29,Shopify Rebellion
+JSTN,0.85,0.61,1.83,3.39,0.22,Shopify Rebellion
 ApperentlyJack,0.82,0.58,1.57,3.24,0.20,Gen.G Mobil 1
 Firstkiller,0.89,0.64,1.94,3.38,0.17,Gen.G Mobil 1
-Chronic,0.75,0.55,1.86,3.03,0.25,Gen.G Mobil 1
-GarrettG,0.78,0.55,1.58,3.07,0.27,NRG Esports
-Frosty,0.70,0.51,1.57,3.01,0.35,NRG Esports
-Mist,0.71,0.57,1.91,2.99,0.29,NRG Esports
-Archie,0.81,0.62,1.99,3.32,0.22,Oxygen Esports
+Chronic,0.75,0.55,1.86,3.03,0.24,Gen.G Mobil 1
+GarrettG,0.78,0.55,1.58,3.07,0.23,NRG Esports
+Frosty,0.70,0.51,1.57,3.01,0.30,NRG Esports
+Mist,0.71,0.57,1.91,2.99,0.25,NRG Esports
+Archie,0.81,0.62,1.99,3.32,0.20,Oxygen Esports
 Eekso,0.73,0.48,1.64,2.95,0.30,Oxygen Esports
-Oski,0.77,0.58,1.48,3.31,0.22,Oxygen Esports
-Trk511,0.90,0.68,1.53,3.30,0.28,Team Falcons
-Ahmad,0.95,0.60,1.12,3.30,0.28,Team Falcons
-Nwp0,0.90,0.60,1.62,3.70,0.30,Team Falcons
-Arsenal,0.64,0.56,1.31,2.67,0.25,Spacestation
-LJ,0.74,0.60,1.69,2.82,0.23,Spacestation
-Hockser,0.59,0.59,1.78,2.66,0.24,Spacestation
-Aqua,0.83,0.56,1.65,3.25,0.33,Muffin Men
-Squishy,0.67,0.59,1.47,2.66,0.32,Muffin Men
-Gimmick,0.73,0.55,1.43,2.67,0.38,Muffin Men
-Monkey Moon,0.81,0.64,2.07,3.40,0.13,Team BDS
-Dralii,0.79,0.58,1.61,3.24,0.27,Team BDS
-ExoTiiK,0.78,0.61,1.55,2.96,0.23,Team BDS
-Rw9,0.84,0.69,1.85,2.98,0.29,Rule One
-Kiileerrz,1.02,0.60,1.70,3.36,0.28,Rule One
-M7sN,0.74,0.59,1.77,2.89,0.32,Rule One
+Oski,0.77,0.58,1.48,3.31,0.20,Oxygen Esports
+Trk511,0.90,0.68,1.53,3.30,0.21,Team Falcons
+Ahmad,0.95,0.60,1.12,3.30,0.20,Team Falcons
+Nwp0,0.90,0.60,1.62,3.70,0.26,Team Falcons
+Arsenal,0.64,0.56,1.31,2.67,0.24,Spacestation
+LJ,0.74,0.60,1.69,2.82,0.21,Spacestation
+Hockser,0.59,0.59,1.78,2.66,0.23,Spacestation
+Aqua,0.83,0.56,1.65,3.25,0.29,Muffin Men
+Squishy,0.67,0.59,1.47,2.66,0.26,Muffin Men
+Gimmick,0.73,0.55,1.43,2.67,0.32,Muffin Men
+Monkey Moon,0.81,0.64,2.07,3.40,0.10,Team BDS
+Dralii,0.79,0.58,1.61,3.24,0.25,Team BDS
+ExoTiiK,0.78,0.61,1.55,2.96,0.19,Team BDS
+Rw9,0.84,0.69,1.85,2.98,0.22,Rule One
+Kiileerrz,1.02,0.60,1.70,3.36,0.23,Rule One
+M7sN,0.74,0.59,1.77,2.89,0.27,Rule One
+Joreuz,0.77,0.56,1.69,3.24,0.24,M80
+Ayyjayy,0.82,0.50,1.73,3.21,0.23,M80
+Nass,0.88,0.63,1.54,3.10,0.30,M80
+Retals,0.71,0.52,1.52,2.78,0.26,Luminosity
+Majicbear,0.69,0.57,1.58,2.85,0.26,Luminosity
+Chicago,0.83,0.65,1.42,3.39,0.24,Luminosity
+Noly,0.68,0.56,1.53,2.81,0.20,FA Super Team
+Jknaps,0.81,0.63,1.45,3.31,0.22,FA Super Team
+Comm,0.64,0.54,1.67,2.62,0.26,FA Super Team
+Joyo,0.67,0.53,1.60,2.89,0.18,Moist Esports
+Extra,0.70,0.53,1.43,2.82,0.25,Moist Esports
+Acronik,0.67,0.56,1.55,3.02,0.25,Moist Esports
+Kaydop,0.70,0.57,1.71,2.84,0.25,Kaydop is Back
+Chausette45,0.61,0.50,1.86,2.70,0.26,Kaydop is Back
+Rysfox.,0.69,0.61,1.43,2.92,0.30,Kaydop is Back
+Tox,0.69,0.58,1.88,2.74,0.24,Magnifico
+Stizzy,0.75,0.52,1.77,2.90,0.26,Magnifico
+Atomik,0.88,0.54,1.73,3.54,0.24,Magnifico
+Seikoo,0.85,0.62,1.66,3.49,0.22,Gentlemates
+Itachi,0.72,0.61,1.52,2.87,0.19,Gentlemates
+Juicy,0.58,0.51,1.66,2.52,0.23,Gentlemates
