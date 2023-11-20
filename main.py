@@ -34,9 +34,9 @@ class Player:
             team2_assists_per_game = sum(player.assists_per_game for player in team2.players)
 
             if self.team_name == team1.name:
-                scoring_chance = (self.shooting_percentage + ((team1_assists_per_game / 9) * .05)) - (self.uncertainty * .5)  - ((team2_saves_per_game / 9) * .04)
+                scoring_chance = (self.shooting_percentage + ((team1_assists_per_game / 9) * .05)) - (self.uncertainty * .6)  - ((team2_saves_per_game / 9) * .05)
             elif self.team_name == team2.name:
-                scoring_chance = (self.shooting_percentage + ((team2_assists_per_game / 9) * .05)) - (self.uncertainty * .5)  - ((team1_saves_per_game / 9) * .04)
+                scoring_chance = (self.shooting_percentage + ((team2_assists_per_game / 9) * .05)) - (self.uncertainty * .6)  - ((team1_saves_per_game / 9) * .05)
             else:
                 raise ValueError("Player's team is not one of the provided teams.")
 
@@ -150,7 +150,6 @@ def read_players_from_csv(file_path):
 def get_players_by_team(players, team_name):
     return [player for player in players if player.team_name == team_name]
 
-# Simulate the series multiple times
 def simulate_series_multiple_times(team1, team2, num_simulations):
     team1_total_wins = 0
     team2_total_wins = 0
@@ -285,6 +284,122 @@ def simulate_tournament_multiple_times(teams, num_simulations):
         num_wins = tournament_wins[team]
         print(f"{team}: {percentage:.2f}% ({num_wins} tournaments won)")
 
+def simulate_16_team_tournament(teams):
+    # Check if the number of teams is a power of 2
+    num_teams = len(teams)
+    if num_teams < 2 or not num_teams & (num_teams - 1) == 0:
+        raise ValueError("The number of teams must be a power of 2.")
+
+    # Simulate rounds until there's only one team left
+    round_num = 1
+    while len(teams) > 1:
+        print(f"\n\033[1mRound {round_num}\033[0m")
+        winners = []
+        for i in range(0, len(teams), 2):
+            team1 = teams[i]
+            team2 = teams[i + 1]
+
+            print(f"\nMatchup: \033[1m\033[96m{team1.name}\033[0m vs \033[1m\033[93m{team2.name}\033[0m")
+            print("- " * 30)
+
+            # Simulate the series
+            series_winner, team1_score, team2_score = simulate_series(team1, team2)
+
+            # Determine the winner of the series
+            winners.append(series_winner)
+
+            print("=-" * 40)
+
+        # Move winners to the next round
+        teams = winners
+        round_num += 1
+
+    # Print the winner of the tournament
+    print(f"\n\033[1m\033[92m{teams[0].name}\033[0m wins the tournament!")
+
+def simulate_16_team_tournament_multiple_times(teams, num_simulations):
+    # Check if the number of teams is a power of 2
+    num_teams = len(teams)
+    if num_teams < 2 or not num_teams & (num_teams - 1) == 0:
+        raise ValueError("The number of teams must be a power of 2.")
+
+    # Initialize counters and dictionaries to track statistics
+    round2_counts = {team.name: 0 for team in teams}
+    round3_counts = {team.name: 0 for team in teams}
+    round4_counts = {team.name: 0 for team in teams}
+    tournament_wins = {team.name: 0 for team in teams}
+
+    for _ in range(num_simulations):
+        # Copy the original list of teams to avoid modifying the original
+        current_teams = list(teams)
+
+        # Simulate rounds until there's only one team left
+        round_num = 1
+        while len(current_teams) > 1:
+            print(f"\n\033[1mRound {round_num}\033[0m")
+            winners = []
+            for i in range(0, len(current_teams), 2):
+                team1 = current_teams[i]
+                team2 = current_teams[i + 1]
+
+                print(f"\nMatchup: \033[1m\033[96m{team1.name}\033[0m vs \033[1m\033[93m{team2.name}\033[0m")
+                print("- " * 30)
+
+                # Unpack the tuple returned by simulate_series
+                series_winner, _, _ = simulate_series(team1, team2)
+
+                # Determine the winner of the series
+                winners.append(series_winner)
+                # Print the winner of the tournament
+
+                print("=-" * 40)
+
+            # Move winners to the next round
+            current_teams = winners
+            round_num += 1
+
+        # Count the teams that made it to each round
+        for team in teams:
+            if team in current_teams:
+                if round_num == 2:
+                    round2_counts[team.name] += 1
+                elif round_num == 3:
+                    round3_counts[team.name] += 1
+                elif round_num == 4:
+                    round4_counts[team.name] += 1
+
+        # Count tournament wins
+        tournament_wins[current_teams[0].name] += 1
+
+    # Calculate total potential occurrences for each round
+    total_round2_occurrences = num_simulations * len(teams) // 2
+    total_round3_occurrences = num_simulations * len(teams) // 2
+    total_round4_occurrences = num_simulations * len(teams) // 2
+
+    # Calculate percentages
+    round2_percentages = {team: (count / total_round2_occurrences) * 100 for team, count in round2_counts.items()}
+    round3_percentages = {team: (count / total_round3_occurrences) * 100 for team, count in round3_counts.items()}
+    round4_percentages = {team: (count / total_round4_occurrences) * 100 for team, count in round3_counts.items()}
+    tournament_win_percentages = {team: (count / num_simulations) * 100 for team, count in tournament_wins.items()}
+
+    # Print the results
+    print("\nPercentage of Teams Making it to Round 2:")
+    for team, percentage in round2_percentages.items():
+        print(f"{team}: {percentage:.2f}%")
+
+    print("\nPercentage of Teams Making it to Round 3:")
+    for team, percentage in round3_percentages.items():
+        print(f"{team}: {percentage:.2f}%")
+
+    print("\nPercentage of Teams Making it to Round 4:")
+    for team, percentage in round4_percentages.items():
+        print(f"{team}: {percentage:.2f}%")
+
+    print("\nPercentage of Tournament Wins:")
+    for team, percentage in tournament_win_percentages.items():
+        num_wins = tournament_wins[team]
+        print(f"{team}: {percentage:.2f}% ({num_wins} tournaments won)")
+
 # Read players from CSV file
 players = read_players_from_csv('C:/Users/Maxim/PycharmProjects/Simulation/Players.csv')
 
@@ -292,9 +407,9 @@ players = read_players_from_csv('C:/Users/Maxim/PycharmProjects/Simulation/Playe
 team_names = set(player.team_name for player in players)
 
 # Allow the user to choose between a single series or a tournament
-simulation_type = input("Enter 'series' for a single series or 'tournament' for a tournament: ")
+simulation_type = input("Choose which type of simulation you want to try:\n(1) Series\n(2) 8-team Tournament\n(3) 16-team Tournament\nPick: ")
 
-if simulation_type == "series":
+if simulation_type == "1":
     # Allow user to choose teams
     team1_name = input("Enter Team 1 name: ")
     team2_name = input("Enter Team 2 name: ")
@@ -314,7 +429,7 @@ if simulation_type == "series":
         # Simulate the series
         simulate_series_multiple_times(team1, team2, int(input("Number of Simulations: ")))
 
-elif simulation_type == "tournament":
+elif simulation_type == "2":
     # Allow the user to choose 8 teams for the tournament
     tournament_teams = []
     for i in range(8):
@@ -332,3 +447,22 @@ elif simulation_type == "tournament":
 
     # Simulate the tournament multiple times
     simulate_tournament_multiple_times(tournament_teams, num_tournament_simulations)
+
+elif simulation_type == "3":
+    # Allow the user to choose 16 teams for the tournament
+    tournament_teams = []
+    for i in range(16):
+        team_name = input(f"Enter Team {i + 1} name: ")
+        if team_name not in team_names:
+            print(f"Invalid team name '{team_name}'. Please enter a valid team name.")
+            break
+        else:
+            team_players = get_players_by_team(players, team_name)
+            team = Team(team_name, team_players)
+            tournament_teams.append(team)
+
+    # Allow the user to choose the number of tournament simulations
+    num_tournament_simulations = int(input("Enter the number of tournament simulations: "))
+
+    # Simulate the tournament multiple times
+    simulate_16_team_tournament_multiple_times(tournament_teams, num_tournament_simulations)
