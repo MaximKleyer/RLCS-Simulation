@@ -384,24 +384,24 @@ def simulate_16_team_tournament_multiple_times(teams, num_simulations):
 
     # Print the results
     print("\nPercentage of Teams Making it to Round 2:")
-    for team, percentage in round2_percentages.items():
+    for team, percentage in sorted(round2_percentages.items(), key=lambda x: tournament_wins[x[0]], reverse=True):
         print(f"{team}: {percentage:.2f}%")
 
     print("\nPercentage of Teams Making it to Round 3:")
-    for team, percentage in round3_percentages.items():
+    for team, percentage in sorted(round3_percentages.items(), key=lambda x: tournament_wins[x[0]], reverse=True):
         print(f"{team}: {percentage:.2f}%")
 
     print("\nPercentage of Teams Making it to Round 4:")
-    for team, percentage in round4_percentages.items():
+    for team, percentage in sorted(round4_percentages.items(), key=lambda x: tournament_wins[x[0]], reverse=True):
         print(f"{team}: {percentage:.2f}%")
 
     print("\nPercentage of Tournament Wins:")
-    for team, percentage in tournament_win_percentages.items():
+    for team, percentage in sorted(tournament_win_percentages.items(), key=lambda x: x[1], reverse=True):
         num_wins = tournament_wins[team]
         print(f"{team}: {percentage:.2f}% ({num_wins} tournaments won)")
 
 # Read players from CSV file
-players = read_players_from_csv('C:/Users/Maxim/PycharmProjects/Simulation/Players.csv')
+players = read_players_from_csv('C:/Users/nycdoe/PycharmProjects/Simulation/Players.csv')
 
 # Get unique team names
 team_names = set(player.team_name for player in players)
