@@ -8,3 +8,6 @@ v0.1:
 
 v0.2:
 + Added a 16-team tournament selection using the Players.csv file
+
+v0.2.1:
++ Sorted the percentages from top to bottom (Highest to lowest)
