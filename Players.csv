@@ -2,15 +2,15 @@ Player Name,Goals Per Game,Assists Per Game,Saves Per Game,Shots Per Game,Uncert
 Atomic,0.73,0.63,1.78,3.07,0.22,G2,NA
 Beastmode,0.72,0.57,1.67,3.04,0.12,G2,NA
 Daniel,0.86,0.53,1.86,3.42,0.17,G2,NA
-Alpha54,0.77,0.57,1.88,3.36,0.18,Vitality,EU
+Alpha54,0.77,0.57,1.88,3.36,0.17,Vitality,EU
 Zen,0.80,0.64,1.79,3.27,0.08,Vitality,EU
-Radosin,0.69,0.48,1.91,2.85,0.22,Vitality,EU
+Radosin,0.69,0.48,1.91,2.85,0.21,Vitality,EU
 Vatira,0.84,0.64,1.85,3.13,0.09,KCorp,EU
 Rise,0.70,0.61,1.23,3.08,0.17,KCorp,EU
-Atow,0.76,0.65,1.48,3.36,0.20,KCorp,EU
-Yanxnz,0.87,0.62,1.54,3.44,0.20,Furia,NA
-Drufinho,0.81,0.59,1.62,3.04,0.23,Furia,NA
-Lostt,0.90,0.57,1.70,3.45,0.24,Furia,NA
+Atow,0.76,0.65,1.48,3.36,0.19,KCorp,EU
+Yanxnz,0.87,0.62,1.54,3.44,0.20,Furia,SAM
+Drufinho,0.81,0.59,1.62,3.04,0.23,Furia,SAM
+Lostt,0.90,0.57,1.70,3.45,0.24,Furia,SAM
 2Piece,0.78,0.68,2.31,2.96,0.26,Shopify,NA
 Paarth,0.80,0.63,1.67,2.97,0.28,Shopify,NA
 JSTN,0.73,0.50,1.93,3.25,0.22,Shopify,NA
@@ -23,9 +23,9 @@ Mist,0.75,0.61,2.01,2.86,0.25,NRG,NA
 Archie,0.73,0.60,1.87,3.12,0.20,Oxygen,EU
 Eekso,0.75,0.44,1.65,2.84,0.29,Oxygen,EU
 Oski,0.80,0.55,1.48,3.44,0.20,Oxygen,EU
-Trk511,0.86,0.61,1.51,3.31,0.21,Falcons,
-Ahmad,0.96,0.53,1.07,3.27,0.21,Falcons,
-Nwp0,0.89,0.60,1.62,3.68,0.26,Falcons,
+Trk511,0.86,0.61,1.51,3.31,0.21,Falcons,ME
+Ahmad,0.96,0.53,1.07,3.27,0.21,Falcons,ME
+Nwp0,0.89,0.60,1.62,3.68,0.26,Falcons,ME
 Arsenal,0.57,0.59,1.18,2.64,0.24,SSG,NA
 LJ,0.78,0.58,1.66,2.90,0.22,SSG,NA
 Hockser,0.62,0.58,1.78,2.73,0.24,SSG,NA
@@ -35,18 +35,18 @@ Gimmick,0.65,0.53,1.53,2.73,0.34,Muffin Men,NA
 Monkey Moon,0.77,0.59,2.22,3.23,0.12,BDS,EU
 Dralii,0.88,0.60,1.57,3.51,0.25,BDS,EU
 ExoTiiK,0.75,0.65,1.60,2.82,0.20,BDS,EU
-Rw9,0.88,0.75,1.82,3.13,0.23,Rule One,
-Kiileerrz,1.06,0.63,1.65,3.52,0.23,Rule One,
-M7sN,0.80,0.62,1.62,2.91,0.27,Rule One,
+Rw9,0.88,0.75,1.82,3.13,0.23,Rule One,ME
+Kiileerrz,1.06,0.63,1.65,3.52,0.23,Rule One,ME
+M7sN,0.80,0.62,1.62,2.91,0.27,Rule One,ME
 Joreuz,0.71,0.61,1.62,3.24,0.24,M80,NA
 Ayyjayy,1.02,0.50,1.96,3.69,0.23,M80,NA
 Nass,0.88,0.62,1.55,3.12,0.30,M80,NA
 Retals,0.51,0.59,1.54,2.44,0.26,Luminosity,NA
 Majicbear,0.67,0.54,1.52,2.73,0.27,Luminosity,NA
 Cheese,0.70,0.58,1.72,2.81,0.27,Luminosity,NA
-Noly,0.69,0.65,1.45,2.76,0.22,G3,NA
-Jknaps,0.67,0.59,1.48,3.01,0.24,G3,NA
-Chicago,0.79,0.54,1.35,3.09,0.24,G3,NA
+Noly,0.69,0.65,1.45,2.76,0.22,Noly Comm Chicago,NA
+Comm,0.63,0.48,1.55,2.55,0.26,Noly Comm Chicago,NA
+Chicago,0.79,0.54,1.35,3.09,0.24,Noly Comm Chicago,NA
 Joyo,0.61,0.47,1.59,2.86,0.18,Moist,EU
 Rehzzy,0.72,0.66,1.75,2.59,0.23,Moist,EU
 Oaly,0.84,0.68,1.39,3.37,0.25,Moist,EU
@@ -62,8 +62,8 @@ Juicy,0.55,0.47,1.58,2.53,0.25,Gentlemates,EU
 Creamz,0.75,0.56,1.66,2.86,0.28,hey bro,NA
 Wahvey,0.94,0.53,1.85,2.97,0.31,hey bro,NA
 HockE,0.67,0.60,1.53,2.77,0.30,hey bro,NA
-Reysbull,0.71,0.68,1.68,2.97,0.21,Complexity,NA
-Crr,0.85,0.65,1.65,3.28,0.22,Complexity,NA
+Reysbull,0.71,0.68,1.68,2.97,0.19,Complexity,NA
+Crr,0.85,0.65,1.65,3.28,0.20,Complexity,NA
 Dorito,0.54,0.56,1.45,2.47,0.26,Complexity,NA
 Kinseh,0.61,0.64,1.47,2.68,0.28,Sukhpartik,NA
 Lionblaze,0.85,0.63,1.84,3.16,0.26,Sukhpartik,NA
@@ -101,3 +101,6 @@ Ivn,0.55,0.50,1.62,2.43,0.25,Suhhh,EU
 Stake,0.66,0.58,1.82,2.76,0.27,Devil Fruit,EU
 TeHQoz,0.87,0.71,1.46,3.25,0.29,Devil Fruit,EU
 Compact,0.94,0.61,1.31,3.32,0.30,Devil Fruit,EU
+Dreaz,0.63,0.46,1.64,2.51,0.26,Dreaz Percy Jknaps,NA
+Percy,0.92,0.46,1.82,3.33,0.26,Dreaz Percy Jknaps,NA
+Jknaps,0.67,0.59,1.48,3.01,0.24,Dreaz Percy Jknaps,NA
