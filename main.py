@@ -77,6 +77,9 @@ class Team:
 
         return self_scores, other_scores
 
+    def get_name(self):
+        return self.name
+
 def simulate_series(team1, team2):
     team1_wins = 0
     team2_wins = 0
@@ -125,10 +128,10 @@ def simulate_series(team1, team2):
 
     if team1_wins > team2_wins:
         print(f"\n\033[1m\033[96m{team1.name}\033[0m wins the series {team1_wins}-{team2_wins}!")
-        return team1, team1_wins, team2_wins
+        return team1, team2, team1_wins, team2_wins
     else:
         print(f"\n\033[1m\033[93m{team2.name}\033[0m wins the series {team2_wins}-{team1_wins}!")
-        return team2, team1_wins, team2_wins
+        return team2, team1, team1_wins, team2_wins
 
 def read_players_from_csv(file_path):
     players = []
@@ -400,8 +403,151 @@ def simulate_16_team_tournament_multiple_times(teams, num_simulations):
         num_wins = tournament_wins[team]
         print(f"{team}: {percentage:.2f}% ({num_wins} tournaments won)")
 
+def double_elimination(teams):
+    # Check if the number of teams is a power of 2
+    num_teams = len(teams)
+    if num_teams < 2 or not num_teams & (num_teams - 1) == 0:
+        raise ValueError("The number of teams must be a power of 2.")
+
+    # Simulate rounds until there's only one team left in the Winners Bracket
+    round_num_winners = 1
+    round_num_losers = 1
+
+    def set_matchups(teams_list):
+        all_matchups = []
+        matchup = []
+        for team in teams_list:
+            matchup.append(team)
+            if len(matchup) == 2:
+                all_matchups.append(matchup)
+                matchup = []
+        return all_matchups
+
+    upper_bracket = teams
+    lower_bracket = []
+
+    remaining_teams = teams.copy()
+    print(remaining_teams)
+
+    while len(remaining_teams) > 2:
+        all_matchups = set_matchups(upper_bracket)
+        print(f"\n\033[1mWinners Bracket - Round {round_num_winners}\033[0m")
+        for matchup in all_matchups:
+            team1, team2 = matchup
+            print(f"\nMatchup: \033[1m\033[96m{team1.get_name()}\033[0m vs \033[1m\033[93m{team2.get_name()}\033[0m")
+            print("- " * 30)
+            series_winner, series_loser, team1_score, team2_score = simulate_series(team1, team2)
+            upper_bracket.remove(series_loser)
+            lower_bracket.append(series_loser)
+            # print(f"Winner: {series_winner.get_name()}")
+            # print(f"Loser: {series_loser.get_name()}")
+            # print(f"Upper Bracket: {upper_bracket}")
+            # print(f"Lower Bracket: {lower_bracket}")
+            print("=-" * 40)
+
+        round_num_winners += 1
+        # print(upper_bracket)
+        # print(remaining_teams)
+
+        # Loser bracket
+        all_matchups = set_matchups(lower_bracket)
+        print(f"\n\033[1mLosers Bracket - Round {round_num_losers}\033[0m")
+        for matchup in all_matchups:
+            team1, team2 = matchup
+            print(f"\nMatchup: \033[1m\033[96m{team1.get_name()}\033[0m vs \033[1m\033[93m{team2.get_name()}\033[0m")
+            print("- " * 30)
+            series_winner, series_loser, team1_score, team2_score = simulate_series(team1, team2)
+            lower_bracket.remove(series_loser)
+            # print(series_loser)
+            # print(remaining_teams)
+            remaining_teams.remove(series_loser)
+            print("=-" * 40)
+            # print(f"Winner: {series_winner.get_name()}")
+            # print(f"Loser: {series_loser.get_name()}")
+            # print(f"Upper Bracket: {upper_bracket}")
+            # print(f"Lower Bracket: {lower_bracket}")
+
+        round_num_losers += 1
+
+    print("Grand Finals")
+    upper_winner = upper_bracket[0]
+    lower_winner = lower_bracket[0]
+    # print(f"Upper Winner: {upper_winner}")
+    # print(f"Lower Winner: {lower_winner}")
+
+    series_winner, series_loser, team1_score, team2_score = simulate_series(upper_winner, lower_winner)
+    print(f"Grand Champ: {series_winner.get_name()}")
+
+    # while len(teams) > 1:
+    #     print(f"\n\033[1mWinners Bracket - Round {round_num_winners}\033[0m")
+    #     winners = teams
+    #     losers = []
+    #     loser_teams = []
+    #     for i in range(0, len(winners), 2):
+    #         team1 = winners[i]
+    #         team2 = winners[i + 1]
+    #
+    #         print(f"\nMatchup: \033[1m\033[96m{team1.name}\033[0m vs \033[1m\033[93m{team2.name}\033[0m")
+    #         print("- " * 30)
+    #
+    #         # Simulate the series
+    #         series_winner, series_loser, team1_score, team2_score = simulate_series(team1, team2)
+    #
+    #         # Determine the winner & loser of the series
+    #         #winners.append(series_winner)
+    #         winners.remove(series_loser)
+    #         losers.append(series_loser)
+    #
+    #         print("=-" * 40)
+    #
+    #     # Move winners to the next round
+    #     # teams = winners
+    #     round_num_winners += 1
+    #
+    #     # Check if the number of teams in the loser bracket is a power of 2
+    #     if len(losers) < 2 or not len(losers) & (len(losers) - 1) == 0:
+    #         raise ValueError("The number of teams in the Losers Bracket must be a power of 2.")
+    #
+    #     # Losers Bracket - Round 2
+    #     print(f"\n\033[1mLosers Bracket - Round {round_num_losers}\033[0m")
+    #
+    #     for i in range(0, len(losers), 2):
+    #         # Check if the next index is within the range
+    #         if i + 1 < len(losers):
+    #             team1 = losers[i]
+    #             team2 = losers[i + 1]
+    #
+    #             print(f"\nMatchup: \033[1m\033[96m{team1.name}\033[0m vs \033[1m\033[93m{team2.name}\033[0m")
+    #             print("- " * 30)
+    #
+    #             # Simulate the series
+    #             series_winner, series_loser, _, _ = simulate_series(team1, team2)
+    #
+    #             # Determine the winner of the series
+    #             losers.remove(series_loser)
+    #             teams.remove(series_loser)
+    #
+    #             print("=-" * 40)
+    #
+    #     # Update the losers variable for the next round
+    #     loser_teams = losers
+    #     round_num_losers += 1
+    #
+    # # Determine the Grand Final match
+    # grand_final_team1 = teams[0]
+    # grand_final_team2 = loser_teams[0]
+    #
+    # print(f"\n\033[1mGrand Final\033[0m")
+    # print(f"Matchup: \033[1m\033[96m{grand_final_team1.name}\033[0m vs \033[1m\033[93m{grand_final_team2.name}\033[0m")
+    # print("- " * 30)
+    #
+    # # Simulate the Grand Final series
+    # grand_final_winner, _, _, _ = simulate_series(grand_final_team1, grand_final_team2)
+    #
+    # print(f"\n\033[1mTournament Winner: {grand_final_winner.name}\033[0m")
+
 # Read players from CSV file
-players = read_players_from_csv('C:/Users/nycdoe/PycharmProjects/Simulation/Players.csv')
+players = read_players_from_csv('C:/Users/Maxim/PycharmProjects/Simulation/Players.csv')
 
 # Get unique team names
 team_names = set(player.team_name for player in players)
@@ -466,3 +612,21 @@ elif simulation_type == "3":
 
     # Simulate the tournament multiple times
     simulate_16_team_tournament_multiple_times(tournament_teams, num_tournament_simulations)
+
+elif simulation_type == "4":
+    tournament_teams = []
+    for i in range(16):
+        team_name = input(f"Enter Team {i + 1} name: ")
+        if team_name not in team_names:
+            print(f"Invalid team name '{team_name}'. Please enter a valid team name.")
+            break
+        else:
+            team_players = get_players_by_team(players, team_name)
+            team = Team(team_name, team_players)
+            tournament_teams.append(team)
+
+    # Allow the user to choose the number of tournament simulations
+    num_tournament_simulations = int(input("Enter the number of tournament simulations: "))
+
+    # Simulate the tournament multiple times
+    double_elimination(tournament_teams)
