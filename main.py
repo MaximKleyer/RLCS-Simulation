@@ -1,417 +1,173 @@
 import csv
 import random
+import pandas as pd
+import openpyxl as op
 
-# Player class
-class Player:
-    def __init__(self, name, goals_per_game, assists_per_game, saves_per_game, shots_per_game, uncertainty, team_name):
-        self.name = name
-        self.goals_per_game = float(goals_per_game)
-        self.assists_per_game = float(assists_per_game)
-        self.saves_per_game = float(saves_per_game)
-        self.shots_per_game = float(shots_per_game)
-        self.shooting_percentage = self.goals_per_game / self.shots_per_game
-        self.uncertainty = float(uncertainty)
-        self.team_name = team_name
+def read_team_data(csv_file):
+    team_stats = {}
+    with open(csv_file, mode='r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            team = row['Team Name']
+            if team not in team_stats:
+                team_stats[team] = {
+                    'Goals': 0,
+                    'Assists': 0,
+                    'Saves': 0,
+                    'Shots': 0,
+                    'Uncertainty': 0,
+                    'Players': 0
+                }
 
-    def calculate_rating(self):
-        return (self.goals_per_game + self.assists_per_game + self.saves_per_game) / 3 * self.shots_per_game
+            # Aggregate stats for each team
+            team_stats[team]['Goals'] += float(row['Goals Per Game'])
+            team_stats[team]['Assists'] += float(row['Assists Per Game'])
+            team_stats[team]['Saves'] += float(row['Saves Per Game'])
+            team_stats[team]['Shots'] += float(row['Shots Per Game'])
+            team_stats[team]['Uncertainty'] += float(row['Uncertainty Factor'])
+            team_stats[team]['Players'] += 1
 
-    def play_game(self, team1, team2, overtime=False):
-        goals_scored = 0
-        assists_made = 0
-        saves_made = 0
-        shots_taken = 0
+            # Increase Uncertainty for teams from the 'ME' region
+            if 'Region' in row and row['Region'] == 'ME':
+                team_stats[team]['Uncertainty'] += 0.01
 
-        # Adjust the number of iterations for regular or overtime
-        num_iterations = 5 if not overtime else 1
+            if 'Region' in row and row['Region'] == 'SAM':
+                team_stats[team]['Uncertainty'] += 0.0125
 
-        for _ in range(num_iterations):
-            # Calculate scoring chance based on the saves per game of both teams
-            team1_saves_per_game = sum(player.saves_per_game for player in team1.players)
-            team2_saves_per_game = sum(player.saves_per_game for player in team2.players)
-            # Calculate scoring chance based on the assists per game of both teams
-            team1_assists_per_game = sum(player.assists_per_game for player in team1.players)
-            team2_assists_per_game = sum(player.assists_per_game for player in team2.players)
-
-            if self.team_name == team1.name:
-                scoring_chance = (self.shooting_percentage + ((team1_assists_per_game / 9) * .05)) - (self.uncertainty * .6)  - ((team2_saves_per_game / 9) * .05)
-            elif self.team_name == team2.name:
-                scoring_chance = (self.shooting_percentage + ((team2_assists_per_game / 9) * .05)) - (self.uncertainty * .6)  - ((team1_saves_per_game / 9) * .05)
+    # Calculate average stats for each team
+    for team in team_stats:
+        # print(f"Stats for \033[1m{team}\033[0m:")
+        for stat in ['Goals', 'Assists', 'Saves', 'Shots', 'Uncertainty']:
+            if team_stats[team]['Players'] > 0:  # Check to avoid division by zero
+                team_stats[team][stat] /= team_stats[team]['Players']
+               #  print(f"\t{stat}: {team_stats[team][stat]:.3f}")  # Formatting numbers to three decimal places
             else:
-                raise ValueError("Player's team is not one of the provided teams.")
+                print(f"  No players found for {team}, unable to calculate averages.")
+        # print("-" * 30)
 
-            if random.random() < scoring_chance:
-                goals_scored += 1
-            # Simulate assists and saves (adjust as needed)
-            if random.random() < self.assists_per_game:
-                assists_made += 1
-            if random.random() < self.saves_per_game:
-                saves_made += 1
-            # Track total shots taken
-            shots_taken += 1
+    return team_stats
 
-        return {
-            'player': self.name,
-            'team': self.team_name,
-            'goals_scored': goals_scored,
-            'assists_made': assists_made,
-            'saves_made': saves_made,
-            'shots_taken': shots_taken
-        }
+def calculate_composite_score(team_stats):
+    # Adjust these weights according to how much you value each stat
+    weights = {
+        'Goals': 0.20,
+        'Assists': 0.15,
+        'Saves': 0.135,
+        'Shots': 0.025,
+        'Uncertainty': -0.45  # Negative weight if higher uncertainty is worse
+    }
 
-# Team class
-class Team:
-    def __init__(self, name, players):
-        self.name = name
-        self.players = players
+    composite_scores = {}
+    for team, stats in team_stats.items():
+        goals_per_shot = ((stats['Goals'] * weights['Goals']) /(stats['Shots'] * weights['Shots']))
+        score = goals_per_shot + (stats['Assists'] * weights['Assists']) + (stats['Saves'] * weights['Saves'])
+        composite_scores[team] = abs(score / (stats['Uncertainty'] * weights['Uncertainty']))
 
-    def play_game(self, other_team, overtime=False):
-        self_scores = []
-        other_scores = []
+    return composite_scores
 
-        for player in self.players:
-            self_scores.append(player.play_game(self, other_team, overtime))  # Pass both teams to play_game
+def write_rankings_to_excel(team_names, scores, filename):
+    # Create a DataFrame using team names and scores as separate columns
+    df = pd.DataFrame({
+        'Team Name': team_names,
+        'Score': scores
+    })
 
-        for player in other_team.players:
-            other_scores.append(player.play_game(other_team, self, overtime))  # Pass both teams to play_game
+    # Sort the DataFrame by 'Score' in descending order
+    df.sort_values(by='Score', ascending=False, inplace=True)
+    df.reset_index(drop=True, inplace=True)
+    df.index = df.index + 1  # Adjusting index to start from 1 for ranking
+    df.index.name = 'Rank'  # Naming the index column as 'Rank'
 
-        return self_scores, other_scores
+    # Write DataFrame to an Excel file
+    df.to_excel(filename, index=True)
 
-    def get_name(self):
-        return self.name
+def read_and_sort_excel(filename):
+    # Read Excel file
+    df = pd.read_excel(filename, index_col='Rank')
 
-def simulate_series(team1, team2):
-    team1_wins = 0
-    team2_wins = 0
+    # Sort the DataFrame by 'Rank'
+    df.sort_index(inplace=True)
 
-    for game_num in range(1, 8):  # Allow for potential overtime
-        # Ensure other_team is always an instance of Team
-        team1_players = team1.players
-        team2_players = team2.players
+    # Determine the maximum width needed for the 'Team Name' column, adding extra space
+    max_team_name_width = max(df['Team Name'].apply(len).max(), len('Team Name')) + 5  # Added 5 extra spaces
 
-        # Create teams
-        team1_instance = Team(team1.name, team1_players)
-        team2_instance = Team(team2.name, team2_players)
+    # Determine the width for the 'Score' column (assuming a maximum of 2 decimal places)
+    score_width = max(df['Score'].apply(lambda x: f"{x:.2f}").apply(len).max(), len('Score'))
 
-        self_scores, other_scores = team1_instance.play_game(team2_instance)
+    # Print header with proper alignment
+    print(f"{'Rank':<5} {'Team Name':<{max_team_name_width}} {'Score':>{score_width}}")
 
-        # Calculate team scores
-        self_score = sum(score['goals_scored'] for score in self_scores)
-        other_score = sum(score['goals_scored'] for score in other_scores)
+    # Print each row with formatted columns
+    for rank, row in df.iterrows():
+        print(f"{rank:<10} {row['Team Name']:<{max_team_name_width}} {row['Score']:>{score_width}.2f}")
 
-        # Determine the winner of the game
-        if self_score > other_score:
-            team1_wins += 1
-            print(f"Game {game_num}: \033[1m\033[96m{team1.name}\033[0m {self_score} : {other_score} {team2.name}")
-        elif other_score > self_score:
-            team2_wins += 1
-            print(f"Game {game_num}: {team1.name} {self_score} : {other_score} \033[1m\033[93m{team2.name}\033[0m")
-        else:
-            # Simulate overtime - one goal sudden death
-            while True:
-                self_ot_score, other_ot_score = team1_instance.play_game(team2_instance, overtime=True)
+def simulate_game(team1, team2, team_stats):
+    # Base score calculation
+    base_score_team1 = (team_stats[team1]['Goals'] / team_stats[team1]['Shots']) + team_stats[team1]['Assists'] * 0.05 - team_stats[team2]['Saves'] * 0.05
+    base_score_team2 = (team_stats[team2]['Goals'] / team_stats[team2]['Shots']) + team_stats[team2]['Assists'] * 0.05 - team_stats[team1]['Saves'] * 0.05
 
-                # Check if there is a winner after the overtime
-                if self_ot_score[0]['goals_scored'] != other_ot_score[0]['goals_scored']:
-                    break
+    # Random variation based on Uncertainty
+    variation_team1 = random.uniform(team_stats[team1]['Uncertainty']*0.3, team_stats[team1]['Uncertainty']*0.85)
+    variation_team2 = random.uniform(team_stats[team2]['Uncertainty']*0.3, team_stats[team2]['Uncertainty']*0.85)
 
-            # Determine the winner of the overtime
-            if self_ot_score[0]['goals_scored'] > other_ot_score[0]['goals_scored']:
-                team1_wins += 1
-                print(f"Game {game_num}: \033[1m\033[96m{team1.name}\033[0m {self_score + 1} : {other_score} {team2.name} (OT)")
-            elif self_ot_score[0]['goals_scored'] < other_ot_score[0]['goals_scored']:
-                team2_wins += 1
-                print(f"Game {game_num}: {team1.name} {self_score} : {other_score + 1} \033[1m\033[93m{team2.name}\033[0m (OT)")
+    # Final score calculation with reduced random variation and minimum threshold
+    team1_score = random.uniform(0, 100*(base_score_team1 - variation_team1))
+    team2_score = random.uniform(0, 100*(base_score_team2 - variation_team2))
 
-        if team1_wins == 4 or team2_wins == 4:
+    # Print results
+    if team1_score > team2_score:
+        print(f" \033[1m{team1_score:.3f}\033[0m - {team2_score:.3f}")
+    elif team2_score > team1_score:
+        print(f" {team1_score:.3f} - \033[1m{team2_score:.3f}\033[0m")
+
+    return team1_score, team2_score
+
+def simulate_series(team1, team2, team_stats):
+    team1_game_win, team2_game_win = 0, 0
+    team1_series_win, team2_series_win = 0, 0
+    total_team1_game_wins, total_team2_game_wins = 0, 0
+
+    for i in range(1, 8):
+        team1_score, team2_score = simulate_game(team1, team2, team_stats)
+
+        if team1_score > team2_score:
+            team1_game_win += 1
+            total_team1_game_wins += 1
+        elif team2_score > team1_score:
+            team2_game_win += 1
+            total_team2_game_wins += 1
+
+        if team1_game_win == 4:
+            # print(f"\nSeries {j}\n\033[1m\033[96m{team1} \033[0m{team1_game_win} - {team2_game_win} \033[93m{team2}\033[0m")
+            team1_series_win += 1
+            team1_game_win = 0
+            team2_game_win = 0
             break
+        elif team2_game_win == 4:
+            # print(f"\nSeries {j} \n\033[96m{team1} \033[0m{team1_game_win} - {team2_game_win} \033[1m\033[93m{team2}\033[0m")
+            team2_series_win += 1
+            team1_game_win = 0
+            team2_game_win = 0
+            break
+        i += 1
 
-    if team1_wins > team2_wins:
-        print(f"\n\033[1m\033[96m{team1.name}\033[0m wins the series {team1_wins}-{team2_wins}!")
-        return team1, team2, team1_wins, team2_wins
+    if team1_series_win > team2_series_win:
+        winner_team = team1
+        loser_team = team2
+        winner_series_wins = team1_series_win
+        loser_series_wins = team2_series_win
+    elif team2_series_win > team1_series_win:
+        winner_team = team2
+        loser_team = team1
+        winner_series_wins = team2_series_win
+        loser_series_wins = team1_series_win
     else:
-        print(f"\n\033[1m\033[93m{team2.name}\033[0m wins the series {team2_wins}-{team1_wins}!")
-        return team2, team1, team1_wins, team2_wins
+        print("Womp")
 
-def read_players_from_csv(file_path):
-    players = []
-    with open(file_path, 'r') as csv_file:
-        csv_reader = csv.DictReader(csv_file)
-        for row in csv_reader:
-            player = Player(
-                row['Player Name'],
-                row['Goals Per Game'],
-                row['Assists Per Game'],
-                row['Saves Per Game'],
-                row['Shots Per Game'],
-                row['Uncertainty Factor'],
-                row['Team Name']
-            )
-            players.append(player)
-    return players
+    return winner_team, loser_team, winner_series_wins, loser_series_wins
 
-def get_players_by_team(players, team_name):
-    return [player for player in players if player.team_name == team_name]
-
-def simulate_series_multiple_times(team1, team2, num_simulations):
-    team1_total_wins = 0
-    team2_total_wins = 0
-
-    for _ in range(num_simulations):
-        # Ensure other_team is always an instance of Team
-        team1_players = team1.players
-        team2_players = team2.players
-
-        # Create teams
-        team1_instance = Team(team1.name, team1_players)
-        team2_instance = Team(team2.name, team2_players)
-
-        team1_wins, team2_wins = simulate_series(team1_instance, team2_instance)
-
-        # Update total wins for each team
-        if team1_wins > team2_wins:
-            team1_total_wins += 1
-        else:
-            team2_total_wins += 1
-
-        print('-' * 50)  # Add a separator between simulations
-
-    print(
-        f"\nTotal Series Wins:\n\033[1m\033[96m{team1.name}\033[0m: {team1_total_wins}\n\033[1m\033[93m{team2.name}\033[0m: {team2_total_wins}")
-    return team1_total_wins, team2_total_wins
-
-def simulate_tournament(teams):
-    # Check if the number of teams is a power of 2
-    num_teams = len(teams)
-    if num_teams < 2 or not num_teams & (num_teams - 1) == 0:
-        raise ValueError("The number of teams must be a power of 2.")
-
-    # Simulate rounds until there's only one team left
+def simulate_single_elim_tournament(teams, team_stats):
     round_num = 1
-    while len(teams) > 1:
-        print(f"\n\033[1mRound {round_num}\033[0m")
-        winners = []
-        for i in range(0, len(teams), 2):
-            team1 = teams[i]
-            team2 = teams[i + 1]
-
-            print(f"\nMatchup: \033[1m\033[96m{team1.name}\033[0m vs \033[1m\033[93m{team2.name}\033[0m")
-            print("- " * 30)
-
-            # Simulate the series
-            series_winner, team1_score, team2_score = simulate_series(team1, team2)
-
-            # Determine the winner of the series
-            winners.append(series_winner)
-
-            print("=-" * 40)
-
-        # Move winners to the next round
-        teams = winners
-        round_num += 1
-
-    # Print the winner of the tournament
-    print(f"\n\033[1m\033[92m{teams[0].name}\033[0m wins the tournament!")
-
-def simulate_tournament_multiple_times(teams, num_simulations):
-    # Check if the number of teams is a power of 2
-    num_teams = len(teams)
-    if num_teams < 2 or not num_teams & (num_teams - 1) == 0:
-        raise ValueError("The number of teams must be a power of 2.")
-
-    # Initialize counters and dictionaries to track statistics
-    round2_counts = {team.name: 0 for team in teams}
-    round3_counts = {team.name: 0 for team in teams}
-    tournament_wins = {team.name: 0 for team in teams}
-
-    for _ in range(num_simulations):
-        # Copy the original list of teams to avoid modifying the original
-        current_teams = list(teams)
-
-        # Simulate rounds until there's only one team left
-        round_num = 1
-        while len(current_teams) > 1:
-            print(f"\n\033[1mRound {round_num}\033[0m")
-            winners = []
-            for i in range(0, len(current_teams), 2):
-                team1 = current_teams[i]
-                team2 = current_teams[i + 1]
-
-                print(f"\nMatchup: \033[1m\033[96m{team1.name}\033[0m vs \033[1m\033[93m{team2.name}\033[0m")
-                print("- " * 30)
-
-                # Unpack the tuple returned by simulate_series
-                series_winner, _, _ = simulate_series(team1, team2)
-
-                # Determine the winner of the series
-                winners.append(series_winner)
-                # Print the winner of the tournament
-
-                print("=-" * 40)
-
-            # Move winners to the next round
-            current_teams = winners
-            round_num += 1
-
-        # Count the teams that made it to each round
-        for team in teams:
-            if team in current_teams:
-                if round_num == 2:  # Updated to round_num == 2 to capture teams making it to Round 2
-                    round2_counts[team.name] += 1
-                elif round_num == 3:
-                    round3_counts[team.name] += 1
-
-        # Count tournament wins
-        tournament_wins[current_teams[0].name] += 1
-
-    # Calculate total potential occurrences for each round
-    total_round2_occurrences = num_simulations * len(teams) // 2
-    total_round3_occurrences = num_simulations * len(teams) // 4  # Assuming a power of 2 for the number of teams
-
-    # Calculate percentages
-    round2_percentages = {team: (count / total_round2_occurrences) * 100 for team, count in round2_counts.items()}
-    round3_percentages = {team: (count / total_round3_occurrences) * 100 for team, count in round3_counts.items()}
-    tournament_win_percentages = {team: (count / num_simulations) * 100 for team, count in tournament_wins.items()}
-
-    # Print the results
-    print("\nPercentage of Teams Making it to Round 2:")
-    for team, percentage in round2_percentages.items():
-        print(f"{team}: {percentage:.2f}%")
-
-    print("\nPercentage of Teams Making it to Round 3:")
-    for team, percentage in round3_percentages.items():
-        print(f"{team}: {percentage:.2f}%")
-
-    print("\nPercentage of Tournament Wins:")
-    for team, percentage in tournament_win_percentages.items():
-        num_wins = tournament_wins[team]
-        print(f"{team}: {percentage:.2f}% ({num_wins} tournaments won)")
-
-def simulate_16_team_tournament(teams):
-    # Check if the number of teams is a power of 2
-    num_teams = len(teams)
-    if num_teams < 2 or not num_teams & (num_teams - 1) == 0:
-        raise ValueError("The number of teams must be a power of 2.")
-
-    # Simulate rounds until there's only one team left
-    round_num = 1
-    while len(teams) > 1:
-        print(f"\n\033[1mRound {round_num}\033[0m")
-        winners = []
-        for i in range(0, len(teams), 2):
-            team1 = teams[i]
-            team2 = teams[i + 1]
-
-            print(f"\nMatchup: \033[1m\033[96m{team1.name}\033[0m vs \033[1m\033[93m{team2.name}\033[0m")
-            print("- " * 30)
-
-            # Simulate the series
-            series_winner, team1_score, team2_score = simulate_series(team1, team2)
-
-            # Determine the winner of the series
-            winners.append(series_winner)
-
-            print("=-" * 40)
-
-        # Move winners to the next round
-        teams = winners
-        round_num += 1
-
-    # Print the winner of the tournament
-    print(f"\n\033[1m\033[92m{teams[0].name}\033[0m wins the tournament!")
-
-def simulate_16_team_tournament_multiple_times(teams, num_simulations):
-    # Check if the number of teams is a power of 2
-    num_teams = len(teams)
-    if num_teams < 2 or not num_teams & (num_teams - 1) == 0:
-        raise ValueError("The number of teams must be a power of 2.")
-
-    # Initialize counters and dictionaries to track statistics
-    round2_counts = {team.name: 0 for team in teams}
-    round3_counts = {team.name: 0 for team in teams}
-    round4_counts = {team.name: 0 for team in teams}
-    tournament_wins = {team.name: 0 for team in teams}
-
-    for _ in range(num_simulations):
-        # Copy the original list of teams to avoid modifying the original
-        current_teams = list(teams)
-
-        # Simulate rounds until there's only one team left
-        round_num = 1
-        while len(current_teams) > 1:
-            print(f"\n\033[1mRound {round_num}\033[0m")
-            winners = []
-            for i in range(0, len(current_teams), 2):
-                team1 = current_teams[i]
-                team2 = current_teams[i + 1]
-
-                print(f"\nMatchup: \033[1m\033[96m{team1.name}\033[0m vs \033[1m\033[93m{team2.name}\033[0m")
-                print("- " * 30)
-
-                # Unpack the tuple returned by simulate_series
-                series_winner, _, _ = simulate_series(team1, team2)
-
-                # Determine the winner of the series
-                winners.append(series_winner)
-                # Print the winner of the tournament
-
-                print("=-" * 40)
-
-            # Move winners to the next round
-            current_teams = winners
-            round_num += 1
-
-        # Count the teams that made it to each round
-        for team in teams:
-            if team in current_teams:
-                if round_num == 2:
-                    round2_counts[team.name] += 1
-                elif round_num == 3:
-                    round3_counts[team.name] += 1
-                elif round_num == 4:
-                    round4_counts[team.name] += 1
-
-        # Count tournament wins
-        tournament_wins[current_teams[0].name] += 1
-
-    # Calculate total potential occurrences for each round
-    total_round2_occurrences = num_simulations * len(teams) // 2
-    total_round3_occurrences = num_simulations * len(teams) // 2
-    total_round4_occurrences = num_simulations * len(teams) // 2
-
-    # Calculate percentages
-    round2_percentages = {team: (count / total_round2_occurrences) * 100 for team, count in round2_counts.items()}
-    round3_percentages = {team: (count / total_round3_occurrences) * 100 for team, count in round3_counts.items()}
-    round4_percentages = {team: (count / total_round4_occurrences) * 100 for team, count in round3_counts.items()}
-    tournament_win_percentages = {team: (count / num_simulations) * 100 for team, count in tournament_wins.items()}
-
-    # Print the results
-    print("\nPercentage of Teams Making it to Round 2:")
-    for team, percentage in sorted(round2_percentages.items(), key=lambda x: tournament_wins[x[0]], reverse=True):
-        print(f"{team}: {percentage:.2f}%")
-
-    print("\nPercentage of Teams Making it to Round 3:")
-    for team, percentage in sorted(round3_percentages.items(), key=lambda x: tournament_wins[x[0]], reverse=True):
-        print(f"{team}: {percentage:.2f}%")
-
-    print("\nPercentage of Teams Making it to Round 4:")
-    for team, percentage in sorted(round4_percentages.items(), key=lambda x: tournament_wins[x[0]], reverse=True):
-        print(f"{team}: {percentage:.2f}%")
-
-    print("\nPercentage of Tournament Wins:")
-    for team, percentage in sorted(tournament_win_percentages.items(), key=lambda x: x[1], reverse=True):
-        num_wins = tournament_wins[team]
-        print(f"{team}: {percentage:.2f}% ({num_wins} tournaments won)")
-
-def double_elimination(teams):
-    # Check if the number of teams is a power of 2
-    num_teams = len(teams)
-    if num_teams < 2 or not num_teams & (num_teams - 1) == 0:
-        raise ValueError("The number of teams must be a power of 2.")
-
-    # Simulate rounds until there's only one team left in the Winners Bracket
-    round_num_winners = 1
-    round_num_losers = 1
 
     def set_matchups(teams_list):
         all_matchups = []
@@ -423,210 +179,70 @@ def double_elimination(teams):
                 matchup = []
         return all_matchups
 
-    upper_bracket = teams
-    lower_bracket = []
-
-    remaining_teams = teams.copy()
-    print(remaining_teams)
+    # Remaining teams
+    remaining_teams = teams
 
     while len(remaining_teams) > 2:
-        all_matchups = set_matchups(upper_bracket)
-        print(f"\n\033[1mWinners Bracket - Round {round_num_winners}\033[0m")
+        # Set matchups for current round
+        all_matchups = set_matchups(remaining_teams)
+        print(f"\nRound {round_num} matchups:")
         for matchup in all_matchups:
             team1, team2 = matchup
-            print(f"\nMatchup: \033[1m\033[96m{team1.get_name()}\033[0m vs \033[1m\033[93m{team2.get_name()}\033[0m")
+            print(f"\033[1m\033[96m{team1}\033[0m vs \033[1m\033[93m{team2}\033[0m")
             print("- " * 30)
-            series_winner, series_loser, team1_score, team2_score = simulate_series(team1, team2)
-            upper_bracket.remove(series_loser)
-            lower_bracket.append(series_loser)
-            # print(f"Winner: {series_winner.get_name()}")
-            # print(f"Loser: {series_loser.get_name()}")
-            # print(f"Upper Bracket: {upper_bracket}")
-            # print(f"Lower Bracket: {lower_bracket}")
+            winner_team, loser_team, winner_series_wins, loser_series_wins = simulate_series(team1, team2, team_stats)
+            remaining_teams.remove(loser_team)
             print("=-" * 40)
+        round_num += 1
 
-        round_num_winners += 1
-        # print(upper_bracket)
-        # print(remaining_teams)
+    # Set Grand Finals matchup
+    team1, team2 = remaining_teams[0], remaining_teams[1]
+    print(f"\nGrand Finals matchup:")
+    print(f"\033[1m\033[96m{team1}\033[0m vs \033[1m\033[93m{team2}\033[0m")
+    print("- " * 30)
+    winner_team, loser_team, winner_series_wins, loser_series_wins = simulate_series(team1, team2, team_stats)
+    print(f"Winner: \033[1m\033[96m {winner_team}\033[0m")
 
-        # Loser bracket
-        all_matchups = set_matchups(lower_bracket)
-        print(f"\n\033[1mLosers Bracket - Round {round_num_losers}\033[0m")
-        for matchup in all_matchups:
-            team1, team2 = matchup
-            print(f"\nMatchup: \033[1m\033[96m{team1.get_name()}\033[0m vs \033[1m\033[93m{team2.get_name()}\033[0m")
-            print("- " * 30)
-            series_winner, series_loser, team1_score, team2_score = simulate_series(team1, team2)
-            lower_bracket.remove(series_loser)
-            # print(series_loser)
-            # print(remaining_teams)
-            remaining_teams.remove(series_loser)
-            print("=-" * 40)
-            # print(f"Winner: {series_winner.get_name()}")
-            # print(f"Loser: {series_loser.get_name()}")
-            # print(f"Upper Bracket: {upper_bracket}")
-            # print(f"Lower Bracket: {lower_bracket}")
+def main():
+    # Read team data from CSV file
+    csv_file = 'C:/Users/nycdoe/PycharmProjects/RLCS_Simulation/RLCSsheet.csv'
+    team_stats = read_team_data(csv_file)
 
-        round_num_losers += 1
+    # Get user selection
+    selection = input("(1) Simulate a BO7 series\n(2) Rank all teams\n(3) Simulate 16-team single elimination tournament\n\nSelection: ")
 
-    print("Grand Finals")
-    upper_winner = upper_bracket[0]
-    lower_winner = lower_bracket[0]
-    # print(f"Upper Winner: {upper_winner}")
-    # print(f"Lower Winner: {lower_winner}")
+    if selection == '1':
+        # Get team names from user
+        team1 = input("Team 1: ")
+        team2 = input("Team 2: ")
 
-    series_winner, series_loser, team1_score, team2_score = simulate_series(upper_winner, lower_winner)
-    print(f"Grand Champ: {series_winner.get_name()}")
+        # Simulate a Best of 7 series
+        simulate_series(team1, team2, team_stats)
 
-    # while len(teams) > 1:
-    #     print(f"\n\033[1mWinners Bracket - Round {round_num_winners}\033[0m")
-    #     winners = teams
-    #     losers = []
-    #     loser_teams = []
-    #     for i in range(0, len(winners), 2):
-    #         team1 = winners[i]
-    #         team2 = winners[i + 1]
-    #
-    #         print(f"\nMatchup: \033[1m\033[96m{team1.name}\033[0m vs \033[1m\033[93m{team2.name}\033[0m")
-    #         print("- " * 30)
-    #
-    #         # Simulate the series
-    #         series_winner, series_loser, team1_score, team2_score = simulate_series(team1, team2)
-    #
-    #         # Determine the winner & loser of the series
-    #         #winners.append(series_winner)
-    #         winners.remove(series_loser)
-    #         losers.append(series_loser)
-    #
-    #         print("=-" * 40)
-    #
-    #     # Move winners to the next round
-    #     # teams = winners
-    #     round_num_winners += 1
-    #
-    #     # Check if the number of teams in the loser bracket is a power of 2
-    #     if len(losers) < 2 or not len(losers) & (len(losers) - 1) == 0:
-    #         raise ValueError("The number of teams in the Losers Bracket must be a power of 2.")
-    #
-    #     # Losers Bracket - Round 2
-    #     print(f"\n\033[1mLosers Bracket - Round {round_num_losers}\033[0m")
-    #
-    #     for i in range(0, len(losers), 2):
-    #         # Check if the next index is within the range
-    #         if i + 1 < len(losers):
-    #             team1 = losers[i]
-    #             team2 = losers[i + 1]
-    #
-    #             print(f"\nMatchup: \033[1m\033[96m{team1.name}\033[0m vs \033[1m\033[93m{team2.name}\033[0m")
-    #             print("- " * 30)
-    #
-    #             # Simulate the series
-    #             series_winner, series_loser, _, _ = simulate_series(team1, team2)
-    #
-    #             # Determine the winner of the series
-    #             losers.remove(series_loser)
-    #             teams.remove(series_loser)
-    #
-    #             print("=-" * 40)
-    #
-    #     # Update the losers variable for the next round
-    #     loser_teams = losers
-    #     round_num_losers += 1
-    #
-    # # Determine the Grand Final match
-    # grand_final_team1 = teams[0]
-    # grand_final_team2 = loser_teams[0]
-    #
-    # print(f"\n\033[1mGrand Final\033[0m")
-    # print(f"Matchup: \033[1m\033[96m{grand_final_team1.name}\033[0m vs \033[1m\033[93m{grand_final_team2.name}\033[0m")
-    # print("- " * 30)
-    #
-    # # Simulate the Grand Final series
-    # grand_final_winner, _, _, _ = simulate_series(grand_final_team1, grand_final_team2)
-    #
-    # print(f"\n\033[1mTournament Winner: {grand_final_winner.name}\033[0m")
 
-# Read players from CSV file
-players = read_players_from_csv('C:/Users/Maxim/PycharmProjects/Simulation/Players.csv')
+    elif selection == '2':
+        composite_scores = calculate_composite_score(team_stats)
 
-# Get unique team names
-team_names = set(player.team_name for player in players)
+        # Extract team names and scores separately from composite_scores
+        team_names = list(composite_scores.keys())
+        scores = list(composite_scores.values())
 
-# Allow the user to choose between a single series or a tournament
-simulation_type = input("Choose which type of simulation you want to try:\n(1) Series\n(2) 8-team Tournament\n(3) 16-team Tournament\nPick: ")
+        # Write the rankings to an Excel file
+        write_rankings_to_excel(team_names, scores, 'rankings.xlsx')
 
-if simulation_type == "1":
-    # Allow user to choose teams
-    team1_name = input("Enter Team 1 name: ")
-    team2_name = input("Enter Team 2 name: ")
+        # Read and display the sorted Excel file
+        read_and_sort_excel('rankings.xlsx')
 
-    # Check if the entered team names exist in the dataset
-    if team1_name not in team_names or team2_name not in team_names:
-        print("Invalid team names. Please enter valid team names.")
-    else:
-        # Get players based on team name
-        team1_players = get_players_by_team(players, team1_name)
-        team2_players = get_players_by_team(players, team2_name)
 
-        # Create teams
-        team1 = Team(team1_name, team1_players)
-        team2 = Team(team2_name, team2_players)
+    elif selection == '3':
+        teams = []
+        for i in range(1, 5):
+            team_name = input(f"Team {i}: ")
+            teams.append(team_name)
+            i += 1
 
-        # Simulate the series
-        simulate_series_multiple_times(team1, team2, int(input("Number of Simulations: ")))
+        # Simulate a 16-team single elimination tournament
+        simulate_single_elim_tournament(teams, team_stats)
 
-elif simulation_type == "2":
-    # Allow the user to choose 8 teams for the tournament
-    tournament_teams = []
-    for i in range(8):
-        team_name = input(f"Enter Team {i + 1} name: ")
-        if team_name not in team_names:
-            print(f"Invalid team name '{team_name}'. Please enter a valid team name.")
-            break
-        else:
-            team_players = get_players_by_team(players, team_name)
-            team = Team(team_name, team_players)
-            tournament_teams.append(team)
-
-    # Allow the user to choose the number of tournament simulations
-    num_tournament_simulations = int(input("Enter the number of tournament simulations: "))
-
-    # Simulate the tournament multiple times
-    simulate_tournament_multiple_times(tournament_teams, num_tournament_simulations)
-
-elif simulation_type == "3":
-    # Allow the user to choose 16 teams for the tournament
-    tournament_teams = []
-    for i in range(16):
-        team_name = input(f"Enter Team {i + 1} name: ")
-        if team_name not in team_names:
-            print(f"Invalid team name '{team_name}'. Please enter a valid team name.")
-            break
-        else:
-            team_players = get_players_by_team(players, team_name)
-            team = Team(team_name, team_players)
-            tournament_teams.append(team)
-
-    # Allow the user to choose the number of tournament simulations
-    num_tournament_simulations = int(input("Enter the number of tournament simulations: "))
-
-    # Simulate the tournament multiple times
-    simulate_16_team_tournament_multiple_times(tournament_teams, num_tournament_simulations)
-
-elif simulation_type == "4":
-    tournament_teams = []
-    for i in range(16):
-        team_name = input(f"Enter Team {i + 1} name: ")
-        if team_name not in team_names:
-            print(f"Invalid team name '{team_name}'. Please enter a valid team name.")
-            break
-        else:
-            team_players = get_players_by_team(players, team_name)
-            team = Team(team_name, team_players)
-            tournament_teams.append(team)
-
-    # Allow the user to choose the number of tournament simulations
-    num_tournament_simulations = int(input("Enter the number of tournament simulations: "))
-
-    # Simulate the tournament multiple times
-    double_elimination(tournament_teams)
+if __name__ == "__main__":
+    main()

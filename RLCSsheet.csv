@@ -1,0 +1,112 @@
+Player Name,Goals Per Game,Assists Per Game,Saves Per Game,Shots Per Game,Uncertainty Factor,Team Name,Region
+Breezi,0.77,0.57,1.60,3.15,0.26,100%,EU
+Crispy,0.57,0.48,1.81,2.80,0.26,100%,EU
+Triton,0.81,0.74,1.39,3.32,0.27,100%,EU
+Monkey Moon,0.77,0.59,2.22,3.23,0.12,BDS,EU
+Dralii,0.88,0.60,1.57,3.51,0.23,BDS,EU
+ExoTiiK,0.75,0.65,1.60,2.82,0.19,BDS,EU
+Stake,0.66,0.58,1.82,2.76,0.26,Petankos,EU
+Dying,0.68,0.48,1.39,2.77,0.28,Petankos,EU
+Lasa,0.56,0.58,1.87,2.37,0.28,Petankos,EU
+Rezears,0.66,0.65,1.65,3.05,0.25,Full Win,EU
+saizen,0.70,0.55,1.35,2.76,0.26,Full Win,EU
+LuiisP,0.77,0.72,1.68,2.93,0.26,Full Win,EU
+Seikoo,0.74,0.62,1.56,3.43,0.20,Gentlemates,EU
+Itachi,0.78,0.55,1.37,2.97,0.18,Gentlemates,EU
+Juicy,0.55,0.47,1.58,2.53,0.24,Gentlemates,EU
+Kaydop,0.76,0.53,1.88,2.96,0.26,Solary,EU
+Chausette45,0.58,0.54,1.94,2.62,0.27,Solary,EU
+Rysfox.,0.71,0.61,1.45,2.93,0.28,Solary,EU
+Vatira,0.84,0.64,1.85,3.13,0.09,KCorp,EU
+Rise,0.70,0.61,1.23,3.08,0.17,KCorp,EU
+Atow,0.76,0.65,1.48,3.36,0.19,KCorp,EU
+Tox,0.75,0.50,2.14,2.98,0.23,Magnifico,EU
+Stizzy,0.78,0.54,1.83,2.98,0.24,Magnifico,EU
+Atomik,0.93,0.56,1.73,3.70,0.24,Magnifico,EU
+Joyo,0.61,0.47,1.59,2.86,0.18,Moist,EU
+Rehzzy,0.72,0.66,1.75,2.59,0.22,Moist,EU
+Oaly,0.84,0.68,1.39,3.37,0.23,Moist,EU
+Mittaen,0.66,0.53,1.63,3.07,0.25,Monkeys,EU
+Smokez,0.75,0.54,1.73,2.63,0.26,Monkeys,EU
+Dying,0.68,0.48,1.39,2.77,0.28,Monkeys,EU
+Archie,0.73,0.60,1.87,3.12,0.20,Oxygen,EU
+Eekso,0.75,0.44,1.65,2.84,0.24,Oxygen,EU
+Oski,0.80,0.55,1.48,3.44,0.19,Oxygen,EU
+Noahsaki,0.69,0.54,1.54,2.86,0.25,Resolve,EU
+Gomb,0.75,0.56,1.74,2.97,0.25,Resolve,EU
+Hibbs,0.68,0.44,1.39,2.94,0.27,Resolve,EU
+Mikeboy,0.65,0.54,1.73,2.72,0.25,Suhhh,EU
+Tho.,0.58,0.55,1.84,3.11,0.25,Suhhh,EU
+TeHQoz,0.87,0.71,1.46,3.25,0.27,Suhhh,EU
+Catalysm,0.64,0.58,1.66,3.06,0.24,Team3,EU
+Marc_by_8,0.55,0.54,1.51,2.33,0.24,Team3,EU
+Rizex45,0.71,0.53,1.65,2.75,0.25,Team3,EU
+RelatingWave,0.59,0.56,1.61,2.61,0.25,Top Cougars,EU
+Toxiic,0.63,0.46,1.54,2.34,0.25,Top Cougars,EU
+Accro,0.85,0.61,1.56,3.08,0.26,Top Cougars,EU
+Alpha54,0.77,0.57,1.88,3.36,0.16,Vitality,EU
+Zen,0.80,0.64,1.79,3.27,0.08,Vitality,EU
+Radosin,0.69,0.48,1.91,2.85,0.20,Vitality,EU
+Trk511,0.86,0.61,1.51,3.31,0.21,Falcons,ME
+Rw9,0.88,0.75,1.82,3.13,0.23,Falcons,ME
+Kiileerrz,1.06,0.63,1.65,3.52,0.23,Falcons,ME
+Alraz,0.76,0.61,1.52,2.76,0.30,Boulevard,NA
+Delta,0.76,0.63,1.45,3.05,0.31,Boulevard,NA
+Repeat,0.51,0.58,1.32,2.31,0.35,Boulevard,NA
+tcorrell,0.68,0.58,1.95,2.89,0.30,Clovarity,NA
+Jpow,0.71,0.47,1.61,3.06,0.30,Clovarity,NA
+ayjacks,0.59,0.46,1.59,2.30,0.31,Clovarity,NA
+Reysbull,0.71,0.68,1.68,2.97,0.19,Complexity,NA
+Crr,0.85,0.65,1.65,3.28,0.20,Complexity,NA
+Dorito,0.54,0.56,1.45,2.47,0.26,Complexity,NA
+Evoh,0.56,0.44,1.63,2.70,0.25,Dignitas,NA
+Arsenal,0.57,0.59,1.18,2.64,0.24,Dignitas,NA
+Aris,0.87,0.63,1.38,3.22,0.31,Dignitas,NA
+Atomic,0.73,0.63,1.78,3.07,0.22,G2,NA
+Beastmode,0.72,0.57,1.67,3.04,0.12,G2,NA
+Daniel,0.86,0.53,1.86,3.42,0.17,G2,NA
+ApparentlyJack,0.87,0.54,1.48,3.38,0.20,GenG,NA
+Firstkiller,0.95,0.76,1.97,3.41,0.15,GenG,NA
+Chronic,0.77,0.61,1.83,3.07,0.22,GenG,NA
+Andy,0.68,0.59,2.05,3.14,0.29,Ghost,NA
+Toastie,0.76,0.49,1.79,2.95,0.31,Ghost,NA
+Sosa,0.84,0.56,1.70,2.95,0.29,Ghost,NA
+Creamz,0.75,0.56,1.66,2.86,0.28,hey bro,NA
+Wahvey,0.94,0.53,1.85,2.97,0.31,hey bro,NA
+HockE,0.67,0.60,1.53,2.77,0.30,hey bro,NA
+Retals,0.51,0.59,1.54,2.44,0.26,Luminosity,NA
+Majicbear,0.67,0.54,1.52,2.73,0.27,Luminosity,NA
+Cheese,0.70,0.58,1.72,2.81,0.27,Luminosity,NA
+Joreuz,0.71,0.61,1.62,3.24,0.24,M80,NA
+Ayyjayy,1.02,0.50,1.96,3.69,0.23,M80,NA
+Nass,0.88,0.62,1.55,3.12,0.30,M80,NA
+Aqua,0.86,0.55,1.74,3.45,0.29,Muffin Men,NA
+Squishy,0.47,0.49,1.49,2.43,0.27,Muffin Men,NA
+Gimmick,0.65,0.53,1.53,2.73,0.34,Muffin Men,NA
+GarrettG,0.66,0.46,1.73,2.85,0.23,NRG,NA
+Frosty,0.70,0.51,1.57,3.01,0.30,NRG,NA
+Mist,0.75,0.61,2.01,2.86,0.25,NRG,NA
+Noly,0.69,0.65,1.45,2.76,0.21,OG,NA
+Comm,0.63,0.48,1.55,2.55,0.24,OG,NA
+Jknaps,0.67,0.59,1.48,3.01,0.23,OG,NA
+2Piece,0.78,0.68,2.31,2.96,0.26,Shopify,NA
+Paarth,0.80,0.63,1.67,2.97,0.28,Shopify,NA
+JSTN,0.73,0.50,1.93,3.25,0.22,Shopify,NA
+Chicago,0.79,0.54,1.35,3.09,0.22,SSG,NA
+LJ,0.78,0.58,1.66,2.90,0.22,SSG,NA
+Hockser,0.62,0.58,1.78,2.73,0.24,SSG,NA
+Kinseh,0.61,0.64,1.47,2.68,0.28,Sukhpartik,NA
+Lionblaze,0.85,0.63,1.84,3.16,0.26,Sukhpartik,NA
+Zineel,0.75,0.55,1.60,2.78,0.29,Sukhpartik,NA
+Dreaz,0.63,0.46,1.64,2.51,0.26,Boys,NA
+Percy,0.92,0.46,1.82,3.33,0.26,Boys,NA
+Gyro,0.55,0.53,1.77,2.39,0.29,Boys,NA
+Ahduhm,0.60,0.54,1.70,2.40,0.30,Savants,NA
+Night.,0.55,0.53,1.68,2.51,0.29,Savants,NA
+Oath,0.95,0.58,1.33,3.17,0.30,Savants,NA
+Yanxnz,0.87,0.62,1.54,3.44,0.19,Furia,SAM
+Drufinho,0.81,0.59,1.62,3.04,0.22,Furia,SAM
+Lostt,0.90,0.57,1.70,3.45,0.22,Furia,SAM
+Ajg.,0.63,0.53,1.46,2.54,0.22,KRU,SAM
+Caard,0.65,0.59,1.33,2.89,0.23,KRU,SAM
+Bemmz,0.53,0.57,1.81,2.44,0.23,KRU,SAM
