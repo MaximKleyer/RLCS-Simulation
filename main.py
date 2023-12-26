@@ -2,8 +2,9 @@ import csv
 import random
 import pandas as pd
 import openpyxl as op
-import tabulate as tb
+from tabulate import tabulate
 import xlsxwriter
+from prettytable import PrettyTable
 
 def get_team_names(csv_file):
     team_names = []
@@ -120,46 +121,18 @@ def calculate_composite_score(team_stats):
 
     return composite_scores
 
-def write_rankings_to_excel(composite_scores, team_names, filename):
-    # Create a DataFrame using team names and scores
+def write_rankings_to_csv(composite_scores, team_names):
+    # Create a DataFrame from the composite scores and team names
     df = pd.DataFrame({
         'Team Name': team_names,
-        'Score': composite_scores
+        'Composite Score': composite_scores
     })
 
-    # Sort the DataFrame by 'Score' in descending order
-    df.sort_values(by='Score', ascending=False, inplace=True)
-    df.reset_index(drop=True, inplace=True)
-    df.index += 1  # Adjusting index to start from 1 for ranking
-    df.index.name = 'Rank'
+    # Sort the DataFrame by composite score
+    df.sort_values(by='Composite Score', ascending=False, inplace=True)
 
-    # Write DataFrame to an Excel file with formatting
-    with pd.ExcelWriter(filename, engine='xlsxwriter') as writer:
-        df.to_excel(writer, sheet_name='Rankings', index=True)
-
-        # Get the xlsxwriter workbook and worksheet objects
-        workbook  = writer.book
-        worksheet = writer.sheets['Rankings']
-
-        # Set the column widths
-        worksheet.set_column('A:A', 5)   # Rank column
-        worksheet.set_column('B:B', 20)  # Team Name column
-        worksheet.set_column('C:C', 10)  # Score column
-
-        # Add number format for Score column
-        num_format = workbook.add_format({'num_format': '0.0000'})
-        worksheet.set_column('C:C', None, num_format)
-
-def read_and_sort_excel(filename):
-    # Read Excel file
-    df = pd.read_excel(filename, index_col='Rank')
-
-    # Sort the DataFrame by 'Rank'
-    df.sort_index(inplace=True)
-
-    # Convert the DataFrame to a table using Tabulate
-    # You can choose different table formats like 'grid', 'plain', 'pipe', 'html', etc.
-    print(tb.tabulate(df, headers='keys', tablefmt='plain'))
+    # Use tabulate to print the DataFrame
+    print(tabulate(df, headers='keys', tablefmt='psql', showindex=False, floatfmt=".3f"))
 
 def simulate_game(team1, team2, team_stats):
     # Base score calculation
@@ -452,10 +425,7 @@ def main():
         team_names = get_team_names(csv_file)
 
         # Write the rankings to an Excel file
-        write_rankings_to_excel(composite_scores, team_names, 'rankings.xlsx')
-
-        # Read and display the sorted Excel file
-        read_and_sort_excel('rankings.xlsx')
+        write_rankings_to_csv(composite_scores, team_names)
 
 
     elif selection == '3':
