@@ -3,8 +3,6 @@ import random
 import pandas as pd
 import openpyxl as op
 from tabulate import tabulate
-import xlsxwriter
-from prettytable import PrettyTable
 
 def get_team_names(csv_file):
     team_names = []
@@ -105,17 +103,17 @@ def read_team_data(csv_file):
 def calculate_composite_score(team_stats):
     # Adjust these weights according to how much you value each stat
     weights = {
-        'Goals': 0.1,
-        'Assists': 0.075,
-        'Saves': 0.05,
-        'Shots': 0.01,
+        'Goals': 0.05,
+        'Assists': 0.025,
+        'Saves': 0.02,
+        'Shots': 0.005,
         'Uncertainty': -0.6  # Negative weight if higher uncertainty is worse
     }
 
     composite_scores = []
     for team, stats in team_stats.items():
-        goals_per_shot = ((stats['Goals'] * weights['Goals']) / (stats['Shots'] * weights['Shots']))
-        score = goals_per_shot + (stats['Assists'] * weights['Assists']) + (stats['Saves'] * weights['Saves'])
+        goals_per_shot = ((stats['Goals'] * (1 + weights['Goals'])) / (stats['Shots'] * (1 + weights['Shots'])))
+        score = goals_per_shot + (stats['Assists'] * (1 + weights['Assists'])) + (stats['Saves'] * (1 + weights['Saves']))
         final_score = abs(score / (stats['Uncertainty'] * weights['Uncertainty']))
         composite_scores.append(final_score)
 
@@ -140,8 +138,8 @@ def simulate_game(team1, team2, team_stats):
     base_score_team2 = (team_stats[team2]['Goals'] / team_stats[team2]['Shots']) + team_stats[team2]['Assists'] * 0.05 - team_stats[team1]['Saves'] * 0.05
 
     # Random variation based on Uncertainty
-    variation_team1 = random.uniform(team_stats[team1]['Uncertainty']*0.15, team_stats[team1]['Uncertainty']*0.85)
-    variation_team2 = random.uniform(team_stats[team2]['Uncertainty']*0.15, team_stats[team2]['Uncertainty']*0.85)
+    variation_team1 = random.uniform(team_stats[team1]['Uncertainty']*0.10, team_stats[team1]['Uncertainty']*0.9)
+    variation_team2 = random.uniform(team_stats[team2]['Uncertainty']*0.10, team_stats[team2]['Uncertainty']*0.9)
 
     # Final score calculation with reduced random variation and minimum threshold
     team1_score = random.uniform(0, 100*(base_score_team1 - variation_team1))
@@ -155,7 +153,23 @@ def simulate_game(team1, team2, team_stats):
 
     return team1_score, team2_score
 
-def simulate_series(team1, team2, team_stats):
+def simulate_series_BO5(team1, team2, team_stats):
+    team1_game_win, team2_game_win = 0, 0
+
+    for _ in range(1, 6):
+        team1_score, team2_score = simulate_game(team1, team2, team_stats)
+
+        if team1_score > team2_score:
+            team1_game_win += 1
+        elif team2_score > team1_score:
+            team2_game_win += 1
+
+        if team1_game_win == 3:
+            return 1, 0, team1_game_win, team2_game_win, team1, team2  # Team 1 wins this series
+        elif team2_game_win == 3:
+            return 0, 1, team1_game_win, team2_game_win, team2, team1  # Team 2 wins this series
+
+def simulate_series_BO7(team1, team2, team_stats):
     team1_game_win, team2_game_win = 0, 0
 
     for _ in range(1, 8):
@@ -180,7 +194,7 @@ def simulate_series_multiple_times(team1, team2, team_stats):
     max_length = max(len(team1), len(team2)) + 3  # Maximum length considering the team name and score
 
     for j in range(1, num_iterations + 1):
-        team1_series_win, team2_series_win, team1_game_wins, team2_game_wins, _, _ = simulate_series(team1, team2, team_stats)
+        team1_series_win, team2_series_win, team1_game_wins, team2_game_wins, _, _ = simulate_series_BO7(team1, team2, team_stats)
 
         total_team1_series_win += team1_series_win
         total_team2_series_win += team2_series_win
@@ -214,7 +228,7 @@ def simulate_single_elim_tournament(teams, team_stats):
         for matchup in all_matchups:
             team1, team2 = matchup
             # print(f"\033[1m\033[96m{team1}\033[0m vs \033[1m\033[93m{team2}\033[0m")
-            _, _, team1_game_win, team2_game_win, winner, loser = simulate_series(team1, team2, team_stats)
+            _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO7(team1, team2, team_stats)
 
             if team1_game_win == 4:
                 print(f"\033[1m\033[96m{winner}\033[0m \033[1m{team1_game_win}\033[0m - {team2_game_win} {loser}")
@@ -239,7 +253,7 @@ def simulate_single_elim_tournament(teams, team_stats):
     print(f"\nGrand Finals matchup:")
     # print(f"\033[1m\033[96m{team1}\033[0m vs \033[1m\033[93m{team2}\033[0m")
     # print("- " * 30)
-    _, _, team1_game_win, team2_game_win, winner, loser = simulate_series(team1, team2, team_stats)
+    _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO7(team1, team2, team_stats)
 
     if team1_game_win == 4:
         print(f"\033[1m\033[96m{winner}\033[0m \033[1m{team1_game_win}\033[0m - {team2_game_win} {loser}")
@@ -271,7 +285,7 @@ def simulate_double_elim_tournament(teams, team_stats):
         for matchup in all_matchups_winner:
             team1, team2 = matchup
             # print(f"\033[1m\033[96m{team1}\033[0m vs \033[1m\033[93m{team2}\033[0m")
-            _, _, team1_game_win, team2_game_win, winner, loser = simulate_series(team1, team2, team_stats)
+            _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO7(team1, team2, team_stats)
 
             # if team1_game_win == 4:
             #     print(f"\033[1m\033[96m{winner}\033[0m \033[1m{team1_game_win}\033[0m - {team2_game_win} {loser}")
@@ -314,7 +328,7 @@ def simulate_double_elim_tournament(teams, team_stats):
         for matchup in all_matchups_lower:
             team1, team2 = matchup
             # print(f"\033[1m\033[96m{team1}\033[0m vs \033[1m\033[93m{team2}\033[0m")
-            _, _, team1_game_win, team2_game_win, winner, loser = simulate_series(team1, team2, team_stats)
+            _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO7(team1, team2, team_stats)
 
             # if team1_game_win == 4:
             #     print(f"\033[1m\033[96m{winner}\033[0m \033[1m{team1_game_win}\033[0m - {team2_game_win} {loser}")
@@ -369,7 +383,7 @@ def simulate_double_elim_tournament(teams, team_stats):
     # print(lower_bracket_team_final)
     team2 = lower_bracket_team_final[0]
     # print(f"\033[1m\033[96m{team1}\033[0m vs \033[1m\033[93m{team2}\033[0m")
-    _, _, team1_game_win, team2_game_win, winner, loser = simulate_series(team1, team2, team_stats)
+    _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO7(team1, team2, team_stats)
     # print(f"\033[1m\033[96m{team1}\033[0m {team1_game_win} - \033[1m{team2_game_win} \033[93m{team2}\033[0m")
     # # print(f"Grand Champ: \033[1m {winner}\033[0m")
     # print("\/" * 100)
@@ -398,17 +412,261 @@ def simulate_double_elim_tournament_multiple_times(teams, team_stats):
         tourney_wins = total_wins[team]
         print(f"{team}: {win_percentage:.2f}% ({tourney_wins} wins)")
 
+def group_stage(teams, team_stats):
+    group_a, group_b, group_c, group_d = [], [], [], []
+
+    for team in teams:
+        if team in teams[:4]:
+            group_a.append(team)
+        elif team in teams[4:8]:
+            group_b.append(team)
+        elif team in teams[8:12]:
+            group_c.append(team)
+        elif team in teams[12:16]:
+            group_d.append(team)
+
+    # print(f"Group A: {group_a}")
+    # print(f"Group B: {group_b}")
+    # print(f"Group C: {group_c}")
+    # print(f"Group D: {group_d}")
+
+    standings = {team: {'series_wins': 0, 'series_losses': 0, 'game_wins': 0, 'game_losses': 0, 'game_differential': 0} for team in group_a}
+    # Group A Matches and Standings
+    # print("\nGroup A:")
+    for i in range(len(group_a)):
+        for j in range(i + 1, len(group_a)):
+            team1 = group_a[i]
+            team2 = group_a[j]
+            _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO5(team1, team2, team_stats)
+
+            # Update standings
+            standings[winner]['series_wins'] += 1
+            standings[loser]['series_losses'] += 1
+            standings[winner]['game_wins'] += team1_game_win if winner == team1 else team2_game_win
+            standings[loser]['game_wins'] += team2_game_win if loser == team2 else team1_game_win
+            standings[winner]['game_losses'] += team2_game_win if winner == team1 else team1_game_win
+            standings[loser]['game_losses'] += team1_game_win if loser == team2 else team2_game_win
+            standings[winner]['game_differential'] += team1_game_win - team2_game_win if winner == team1 else team2_game_win - team1_game_win
+            standings[loser]['game_differential'] += team2_game_win - team1_game_win if loser == team2 else team1_game_win - team2_game_win
+
+            # if team1_game_win == 3:
+            #     print(f"\033[1m\033[96m{winner}\033[0m \033[1m{team1_game_win}\033[0m - {team2_game_win} {loser}")
+            # elif team2_game_win == 3:
+            #     print(f"{loser} {team1_game_win} - \033[1m{team2_game_win} \033[93m{winner}\033[0m")
+
+    # print("-" * 30)
+
+    sorted_standings_a = sorted(standings.items(), key=lambda x: (x[1]['series_wins'], x[1]['game_differential'], x[1]['game_wins']), reverse=True)
+
+    # for index, (team, record) in enumerate(sorted_standings_a):
+    #     if index < 2:  # For the first and second place teams
+    #         print(f"\033[92m\033[01m{team}: {record['series_wins']} - {record['series_losses']} ({record['game_differential']}) [{record['game_wins']}-{record['game_losses']}] \033[0m")
+    #     else:
+    #         print(f"{team}: {record['series_wins']} - {record['series_losses']} ({record['game_differential']}) [{record['game_wins']}-{record['game_losses']}]")
+
+    # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    standings = {team: {'series_wins': 0, 'series_losses': 0, 'game_wins': 0, 'game_losses': 0, 'game_differential': 0} for team in group_b}
+    # Group B Matches and Standings
+    # print("\nGroup B:")
+    for i in range(len(group_b)):
+        for j in range(i + 1, len(group_b)):
+            team1 = group_b[i]
+            team2 = group_b[j]
+            _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO5(team1, team2, team_stats)
+
+            # Update standings
+            standings[winner]['series_wins'] += 1
+            standings[loser]['series_losses'] += 1
+            standings[winner]['game_wins'] += team1_game_win if winner == team1 else team2_game_win
+            standings[loser]['game_wins'] += team2_game_win if loser == team2 else team1_game_win
+            standings[winner]['game_losses'] += team2_game_win if winner == team1 else team1_game_win
+            standings[loser]['game_losses'] += team1_game_win if loser == team2 else team2_game_win
+            standings[winner]['game_differential'] += team1_game_win - team2_game_win if winner == team1 else team2_game_win - team1_game_win
+            standings[loser]['game_differential'] += team2_game_win - team1_game_win if loser == team2 else team1_game_win - team2_game_win
+
+    #         if team1_game_win == 3:
+    #             print(f"\033[1m\033[96m{winner}\033[0m \033[1m{team1_game_win}\033[0m - {team2_game_win} {loser}")
+    #         elif team2_game_win == 3:
+    #             print(f"{loser} {team1_game_win} - \033[1m{team2_game_win} \033[93m{winner}\033[0m")
+    #
+    # print("-" * 30)
+
+    sorted_standings_b = sorted(standings.items(), key=lambda x: (x[1]['series_wins'], x[1]['game_differential'], x[1]['game_wins']), reverse=True)
+
+    # for index, (team, record) in enumerate(sorted_standings_b):
+    #     if index < 2:  # For the first and second place teams
+    #         print(f"\033[92m\033[01m{team}: {record['series_wins']} - {record['series_losses']} ({record['game_differential']}) [{record['game_wins']}-{record['game_losses']}] \033[0m")
+    #     else:
+    #         print(f"{team}: {record['series_wins']} - {record['series_losses']} ({record['game_differential']}) [{record['game_wins']}-{record['game_losses']}]")
+    # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    standings = {team: {'series_wins': 0, 'series_losses': 0, 'game_wins': 0, 'game_losses': 0, 'game_differential': 0} for team in group_c}
+    # Group C Matches and Standings
+    # print("\nGroup C:")
+    for i in range(len(group_c)):
+        for j in range(i + 1, len(group_c)):
+            team1 = group_c[i]
+            team2 = group_c[j]
+            _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO5(team1, team2, team_stats)
+
+            # Update standings
+            standings[winner]['series_wins'] += 1
+            standings[loser]['series_losses'] += 1
+            standings[winner]['game_wins'] += team1_game_win if winner == team1 else team2_game_win
+            standings[loser]['game_wins'] += team2_game_win if loser == team2 else team1_game_win
+            standings[winner]['game_losses'] += team2_game_win if winner == team1 else team1_game_win
+            standings[loser]['game_losses'] += team1_game_win if loser == team2 else team2_game_win
+            standings[winner]['game_differential'] += team1_game_win - team2_game_win if winner == team1 else team2_game_win - team1_game_win
+            standings[loser]['game_differential'] += team2_game_win - team1_game_win if loser == team2 else team1_game_win - team2_game_win
+
+    #         if team1_game_win == 3:
+    #             print(f"\033[1m\033[96m{winner}\033[0m \033[1m{team1_game_win}\033[0m - {team2_game_win} {loser}")
+    #         elif team2_game_win == 3:
+    #             print(f"{loser} {team1_game_win} - \033[1m{team2_game_win} \033[93m{winner}\033[0m")
+    #
+    # print("-" * 30)
+
+    sorted_standings_c = sorted(standings.items(), key=lambda x: (x[1]['series_wins'], x[1]['game_differential'], x[1]['game_wins']), reverse=True)
+
+    # for index, (team, record) in enumerate(sorted_standings_c):
+    #     if index < 2:  # For the first and second place teams
+    #         print(f"\033[92m\033[01m{team}: {record['series_wins']} - {record['series_losses']} ({record['game_differential']}) [{record['game_wins']}-{record['game_losses']}] \033[0m")
+    #     else:
+    #         print(f"{team}: {record['series_wins']} - {record['series_losses']} ({record['game_differential']}) [{record['game_wins']}-{record['game_losses']}]")
+
+    # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    standings = {team: {'series_wins': 0, 'series_losses': 0, 'game_wins': 0, 'game_losses': 0, 'game_differential': 0} for team in group_d}
+    # Group D Matches and Standings
+    # print("\nGroup D:")
+    for i in range(len(group_d)):
+        for j in range(i + 1, len(group_d)):
+            team1 = group_d[i]
+            team2 = group_d[j]
+            _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO5(team1, team2, team_stats)
+
+            # Update standings
+            standings[winner]['series_wins'] += 1
+            standings[loser]['series_losses'] += 1
+            standings[winner]['game_wins'] += team1_game_win if winner == team1 else team2_game_win
+            standings[loser]['game_wins'] += team2_game_win if loser == team2 else team1_game_win
+            standings[winner]['game_losses'] += team2_game_win if winner == team1 else team1_game_win
+            standings[loser]['game_losses'] += team1_game_win if loser == team2 else team2_game_win
+            standings[winner]['game_differential'] += team1_game_win - team2_game_win if winner == team1 else team2_game_win - team1_game_win
+            standings[loser]['game_differential'] += team2_game_win - team1_game_win if loser == team2 else team1_game_win - team2_game_win
+
+    #         if team1_game_win == 3:
+    #             print(f"\033[1m\033[96m{winner}\033[0m \033[1m{team1_game_win}\033[0m - {team2_game_win} {loser}")
+    #         elif team2_game_win == 3:
+    #             print(f"{loser} {team1_game_win} - \033[1m{team2_game_win} \033[93m{winner}\033[0m")
+    #
+    # print("-" * 30)
+
+    sorted_standings_d = sorted(standings.items(), key=lambda x: (x[1]['series_wins'], x[1]['game_differential'], x[1]['game_wins']), reverse=True)
+
+    # for index, (team, record) in enumerate(sorted_standings_d):
+    #     if index < 2:
+    #         print(f"\033[92m\033[01m{team}: {record['series_wins']} - {record['series_losses']} ({record['game_differential']}) [{record['game_wins']}-{record['game_losses']}] \033[0m")
+    #     else:
+    #         print(f"{team}: {record['series_wins']} - {record['series_losses']} ({record['game_differential']}) [{record['game_wins']}-{record['game_losses']}]")
+
+    return sorted_standings_a, sorted_standings_b, sorted_standings_c, sorted_standings_d
+
+def group_stage_playoffs(teams,team_stats):
+    # Determine matchups
+    sorted_standings_a, sorted_standings_b, sorted_standings_c, sorted_standings_d = group_stage(teams, team_stats)
+
+    playoffs = [
+        sorted_standings_a[0][0],
+        sorted_standings_c[1][0],
+        sorted_standings_b[0][0],
+        sorted_standings_d[1][0],
+        sorted_standings_c[0][0],
+        sorted_standings_b[1][0],
+        sorted_standings_d[0][0],
+        sorted_standings_a[1][0]
+    ]
+
+    round_num = 1
+    remaining_teams = playoffs.copy()
+
+    # Print matchups
+
+    # print("*" * 50)
+
+    while len(remaining_teams) > 2:
+        all_matchups = set_matchups(remaining_teams)
+        # if round_num <= 1:
+        #     print(f"\nQuarter-Finals\n")
+        # elif round_num == 2:
+        #     print(f"\nSemi-Finals\n")
+
+        for matchup in all_matchups:
+            team1, team2 = matchup
+            # print(f"\033[1m\033[96m{team1}\033[0m vs \033[1m\033[93m{team2}\033[0m")
+            _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO7(team1, team2, team_stats)
+
+            # if team1_game_win == 4:
+            #     print(f"\033[1m\033[96m{winner}\033[0m \033[1m{team1_game_win}\033[0m - {team2_game_win} {loser}")
+            # elif team2_game_win == 4:
+            #     print(f"{loser} {team1_game_win} - \033[1m{team2_game_win} \033[93m{winner}\033[0m")
+
+            # Remove loser and winner from remaining teams list
+            remaining_teams.remove(loser)
+
+        # print("-" * 30)
+        round_num += 1
+
+    # Set Grand Finals matchup
+    team1, team2 = remaining_teams[0], remaining_teams[1]
+    # print(f"\nGrand Finals")
+    # print(f"\033[1m\033[96m{team1}\033[0m vs \033[1m\033[93m{team2}\033[0m")
+    # print("- " * 30)
+    _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO7(team1, team2, team_stats)
+
+    # if team1_game_win == 4:
+    #     print(f"\033[1m\033[96m{winner}\033[0m \033[1m{team1_game_win}\033[0m - {team2_game_win} {loser}")
+    #     print(f"\nWinner: \033[1m\033[96m {winner}\033[0m")
+    # elif team2_game_win == 4:
+    #     print(f"{loser} {team1_game_win} - \033[1m{team2_game_win} \033[93m{winner}\033[0m")
+    #     print(f"\nWinner: \033[1m\033[93m {winner}\033[0m")
+
+    return winner
+
+def simulate_multiple_group_stage_playoffs(teams, team_stats):
+    num_iterations = int(input("Number of Iterations: "))
+    tournaments_done = 0
+    total_wins = {teams: 0 for teams in teams}
+
+    for _ in range(num_iterations):
+        winner = group_stage_playoffs(teams, team_stats)
+        total_wins[winner] += 1
+        tournaments_done += 1
+        print(f"\rTournaments Done: {tournaments_done}/{num_iterations}", end="")
+    print()
+
+    win_percentages = {team: (wins / num_iterations) * 100 for team, wins in total_wins.items()}
+
+    # Sort the win percentages in descending order
+    sorted_win_percentages = sorted(win_percentages.items(), key=lambda x: x[1], reverse=True)
+
+    print("\nWin Percentages: ")
+    for team, win_percentage in sorted_win_percentages:
+        tourney_wins = total_wins[team]
+        print(f"{team}: {win_percentage:.2f}% ({tourney_wins} wins)")
 
 def main():
     # Read team data from CSV file
-    csv_file = 'C:/Users/maxim/PycharmProjects/RLCS_Simulation/RLCSsheet.csv'
+    csv_file = 'C:/Users/nycdoe/PycharmProjects/RLCS_Simulation/RLCSsheet.csv'
     team_stats = read_team_data(csv_file)
 
     # Get user selection
     selection = input("(1) Simulate a BO7 series\n"
                                  "(2) Rank all teams\n"
                                  "(3) Simulate 16-team SINGLE elimination tournament\n"
-                                 "(4) Simulate 16-team DOUBLE elimination tournament\n\n"
+                                 "(4) Simulate 16-team DOUBLE elimination tournament\n"
+                                 "(5) Simulate 16-team group stage\n\n"
                                  "Selection: ")
 
     if selection == '1':
@@ -419,14 +677,12 @@ def main():
         # Simulate a Best of 7 series
         simulate_series_multiple_times(team1, team2, team_stats)
 
-
     elif selection == '2':
         composite_scores = calculate_composite_score(team_stats)
         team_names = get_team_names(csv_file)
 
         # Write the rankings to an Excel file
         write_rankings_to_csv(composite_scores, team_names)
-
 
     elif selection == '3':
         teams = []
@@ -438,14 +694,17 @@ def main():
         # Simulate a 16-team single elimination tournament
         simulate_single_elim_tournament(teams, team_stats)
 
-
     elif selection == '4':
-        file_path = 'C:/Users/maxim/PycharmProjects/RLCS_Simulation/rankings.xlsx'
+        file_path = 'C:/Users/nycdoe/PycharmProjects/RLCS_Simulation/rankings.xlsx'
         ordered_teams = get_ordered_teams_from_excel(file_path)
-        print(ordered_teams)
 
-        # Simulate a 16-team double elimination tournament
         simulate_double_elim_tournament_multiple_times(ordered_teams, team_stats)
+
+    elif selection == '5':
+        file_path = 'C:/Users/nycdoe/PycharmProjects/RLCS_Simulation/rankings.xlsx'
+        ordered_teams = get_ordered_teams_from_excel(file_path)
+
+        simulate_multiple_group_stage_playoffs(ordered_teams, team_stats)
 
 if __name__ == "__main__":
     main()
