@@ -15,9 +15,9 @@ def get_team_names(csv_file):
 
     return team_names
 
-def get_ordered_teams_from_excel(file_path):
+def get_ordered_teams_from_csv(file_path):
     # Read the Excel file
-    df = pd.read_excel(file_path)
+    df = pd.read_csv(file_path)
 
     # Assuming the teams are sorted by their rank in the Excel file.
     # If not, sort them here. Replace 'Rank' with the actual rank column name if different.
@@ -82,10 +82,10 @@ def read_team_data(csv_file):
 
             # Increase Uncertainty for teams from the 'ME' region
             if 'Region' in row and row['Region'] == 'ME':
-                team_stats[team]['Uncertainty'] += 0.015
+                team_stats[team]['Uncertainty'] += 0.01
 
             if 'Region' in row and row['Region'] == 'SAM':
-                team_stats[team]['Uncertainty'] += 0.015
+                team_stats[team]['Uncertainty'] += 0.01
 
     # Calculate average stats for each team
     for team in team_stats:
@@ -103,11 +103,11 @@ def read_team_data(csv_file):
 def calculate_composite_score(team_stats):
     # Adjust these weights according to how much you value each stat
     weights = {
-        'Goals': 0.05,
-        'Assists': 0.025,
-        'Saves': 0.02,
-        'Shots': 0.005,
-        'Uncertainty': -0.6  # Negative weight if higher uncertainty is worse
+        'Goals': 0.40,
+        'Assists': 0.25,
+        'Saves': 0.25,
+        'Shots': 0.10,
+        'Uncertainty': -0.5  # Negative weight if higher uncertainty is worse
     }
 
     composite_scores = []
@@ -129,21 +129,24 @@ def write_rankings_to_csv(composite_scores, team_names):
     # Sort the DataFrame by composite score
     df.sort_values(by='Composite Score', ascending=False, inplace=True)
 
+    # Write the DataFrame to a CSV file
+    df.to_csv('rankings.csv', index=False)
+
     # Use tabulate to print the DataFrame
     print(tabulate(df, headers='keys', tablefmt='psql', showindex=False, floatfmt=".3f"))
 
 def simulate_game(team1, team2, team_stats):
     # Base score calculation
-    base_score_team1 = (team_stats[team1]['Goals'] / team_stats[team1]['Shots']) + team_stats[team1]['Assists'] * 0.05 - team_stats[team2]['Saves'] * 0.05
-    base_score_team2 = (team_stats[team2]['Goals'] / team_stats[team2]['Shots']) + team_stats[team2]['Assists'] * 0.05 - team_stats[team1]['Saves'] * 0.05
+    base_score_team1 = (team_stats[team1]['Goals'] / team_stats[team1]['Shots']) * 0.85 + team_stats[team1]['Assists'] * 0.1 - team_stats[team2]['Saves'] * 0.05
+    base_score_team2 = (team_stats[team2]['Goals'] / team_stats[team2]['Shots']) * 0.85 + team_stats[team2]['Assists'] * 0.1 - team_stats[team1]['Saves'] * 0.05
 
     # Random variation based on Uncertainty
-    variation_team1 = random.uniform(team_stats[team1]['Uncertainty']*0.10, team_stats[team1]['Uncertainty']*0.9)
-    variation_team2 = random.uniform(team_stats[team2]['Uncertainty']*0.10, team_stats[team2]['Uncertainty']*0.9)
+    variation_team1 = random.uniform(team_stats[team1]['Uncertainty']*0.20, team_stats[team1]['Uncertainty'] * 0.8)
+    variation_team2 = random.uniform(team_stats[team2]['Uncertainty']*0.20, team_stats[team2]['Uncertainty'] * 0.8)
 
     # Final score calculation with reduced random variation and minimum threshold
-    team1_score = random.uniform(0, 100*(base_score_team1 - variation_team1))
-    team2_score = random.uniform(0, 100*(base_score_team2 - variation_team2))
+    team1_score = random.uniform(50*(base_score_team1 - variation_team1), 100*(base_score_team1 - variation_team1))
+    team2_score = random.uniform(50*(base_score_team2 - variation_team2), 100*(base_score_team2 - variation_team2))
 
     # # Print results
     # if team1_score > team2_score:
@@ -656,17 +659,449 @@ def simulate_multiple_group_stage_playoffs(teams, team_stats):
         tourney_wins = total_wins[team]
         print(f"{team}: {win_percentage:.2f}% ({tourney_wins} wins)")
 
+def swiss_format(teams, team_stats):
+    round_num = 1
+    remaining_teams = teams.copy()
+
+    # Round 1 Brackets
+    starting_bracket = teams
+
+    # Round 2 Brackets
+    one_win_zero_losses = []
+    zero_wins_one_loss = []
+
+    # Round 3 Brackets
+    two_wins_zero_losses = []
+    one_win_one_loss = []
+    zero_wins_two_losses = []
+
+    # Round 4 Brackets
+    two_wins_one_loss = []
+    one_win_two_losses = []
+
+    # Round 5 Brackets
+    two_wins_two_losses = []
+
+    # Final Bracket
+    playoff_bracket = []
+    eliminated_teams = []
+
+    # Standings for the Swiss Bracket
+    standings = {team: {'series_wins': 0, 'series_losses': 0, 'game_wins': 0, 'game_losses': 0, 'game_differential': 0} for team in remaining_teams}
+
+    # Print matchups for round 1
+    if round_num == 1:
+        # print(f"\n{' ': >5}\033[1m\033[4m0-0\033[0m")
+        all_matchups = set_matchups(starting_bracket)
+        for matchup in all_matchups:
+            team1, team2 = matchup
+            # print(f"\033[1m\033[96m{team1}\033[0m vs \033[1m\033[93m{team2}\033[0m")
+            _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO7(team1, team2, team_stats)
+
+            # if team1_game_win == 4:
+            #     print(f"\033[1m\033[96m{winner}\033[0m \033[1m{team1_game_win}\033[0m - {team2_game_win} {loser}")
+            # elif team2_game_win == 4:
+            #     print(f"{loser} {team1_game_win} - \033[1m{team2_game_win} \033[93m{winner}\033[0m")
+
+            # Update standings
+            standings[winner]['series_wins'] += 1
+            standings[loser]['series_losses'] += 1
+            standings[winner]['game_wins'] += team1_game_win if winner == team1 else team2_game_win
+            standings[loser]['game_wins'] += team2_game_win if loser == team2 else team1_game_win
+            standings[winner]['game_losses'] += team2_game_win if winner == team1 else team1_game_win
+            standings[loser]['game_losses'] += team1_game_win if loser == team2 else team2_game_win
+            standings[winner][
+                'game_differential'] += team1_game_win - team2_game_win if winner == team1 else team2_game_win - team1_game_win
+            standings[loser][
+                'game_differential'] += team2_game_win - team1_game_win if loser == team2 else team1_game_win - team2_game_win
+
+            # Winne gets added to winning round while loser gets added to losing round
+            one_win_zero_losses.append(winner)
+            zero_wins_one_loss.append(loser)
+
+        # Sort next round brackets by Series wins, Game differential and Game wins
+        one_win_zero_losses.sort(key=lambda x: (standings[x]['series_wins'], standings[x]['game_differential'], standings[x]['game_wins']), reverse=True)
+        zero_wins_one_loss.sort(key=lambda x: (standings[x]['series_wins'], standings[x]['game_differential'], standings[x]['game_wins']), reverse=True)
+
+        round_num += 1
+
+    # Print matchups for round 2
+    if round_num == 2:
+        # print("=" * 50)
+
+        # PRINT MATCHUPS FOR 1-0 TEAMS
+        # print(f"\n{' ': >5}\033[1m\033[4m1-0\033[0m")
+        all_matchups = set_matchups(one_win_zero_losses)
+        for matchup in all_matchups:
+            team1, team2 = matchup
+            # print(f"\033[1m\033[96m{team1}\033[0m vs \033[1m\033[93m{team2}\033[0m")
+            _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO7(team1, team2, team_stats)
+
+            # if team1_game_win == 4:
+            #     print(f"\033[1m\033[96m{winner}\033[0m \033[1m{team1_game_win}\033[0m - {team2_game_win} {loser}")
+            # elif team2_game_win == 4:
+            #     print(f"{loser} {team1_game_win} - \033[1m{team2_game_win} \033[93m{winner}\033[0m")
+
+            # Update standings
+            standings[winner]['series_wins'] += 1
+            standings[loser]['series_losses'] += 1
+            standings[winner]['game_wins'] += team1_game_win if winner == team1 else team2_game_win
+            standings[loser]['game_wins'] += team2_game_win if loser == team2 else team1_game_win
+            standings[winner]['game_losses'] += team2_game_win if winner == team1 else team1_game_win
+            standings[loser]['game_losses'] += team1_game_win if loser == team2 else team2_game_win
+            standings[winner]['game_differential'] += team1_game_win - team2_game_win if winner == team1 else team2_game_win - team1_game_win
+            standings[loser]['game_differential'] += team2_game_win - team1_game_win if loser == team2 else team1_game_win - team2_game_win
+
+            # Winner gets added to winning round while loser gets added to losing round
+            two_wins_zero_losses.append(winner)
+            one_win_one_loss.append(loser)
+
+        # Sort next round brackets by Series wins, Game differential and Game wins
+        two_wins_zero_losses.sort(key=lambda x: (standings[x]['series_wins'], standings[x]['game_differential'], standings[x]['game_wins']), reverse=True)
+
+        # print("-" * 40)
+
+        # PRINT MATCHUPS FOR 0-1 TEAMS
+        # print(f"{' ': >5}\033[1m\033[4m0-1\033[0m")
+        all_matchups = set_matchups(zero_wins_one_loss)
+        for matchup in all_matchups:
+            team1, team2 = matchup
+            # print(f"\033[1m\033[96m{team1}\033[0m vs \033[1m\033[93m{team2}\033[0m")
+            _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO7(team1, team2, team_stats)
+
+            # if team1_game_win == 4:
+            #     print(f"\033[1m\033[96m{winner}\033[0m \033[1m{team1_game_win}\033[0m - {team2_game_win} {loser}")
+            # elif team2_game_win == 4:
+            #     print(f"{loser} {team1_game_win} - \033[1m{team2_game_win} \033[93m{winner}\033[0m")
+
+            # Update standings
+            standings[winner]['series_wins'] += 1
+            standings[loser]['series_losses'] += 1
+            standings[winner]['game_wins'] += team1_game_win if winner == team1 else team2_game_win
+            standings[loser]['game_wins'] += team2_game_win if loser == team2 else team1_game_win
+            standings[winner]['game_losses'] += team2_game_win if winner == team1 else team1_game_win
+            standings[loser]['game_losses'] += team1_game_win if loser == team2 else team2_game_win
+            standings[winner]['game_differential'] += team1_game_win - team2_game_win if winner == team1 else team2_game_win - team1_game_win
+            standings[loser]['game_differential'] += team2_game_win - team1_game_win if loser == team2 else team1_game_win - team2_game_win
+
+            # Winner gets added to winning round while loser gets added to losing round
+            one_win_one_loss.append(winner)
+            zero_wins_two_losses.append(loser)
+
+        # Sort next round brackets by Series wins, Game differential and Game wins
+        one_win_one_loss.sort(key=lambda x: (standings[x]['series_wins'], standings[x]['game_differential'], standings[x]['game_wins']), reverse=True)
+        zero_wins_two_losses.sort(key=lambda x: (standings[x]['series_wins'], standings[x]['game_differential'], standings[x]['game_wins']), reverse=True)
+
+        round_num += 1
+
+    # Print matchups for round 3
+    if round_num == 3:
+        # print("=" * 50)
+        #
+        # # PRINT MATCHUPS FOR 2-0 TEAMS
+        # print(f"\n{' ': >5}\033[1m\033[4m2-0\033[0m")
+        all_matchups = set_matchups(two_wins_zero_losses)
+        for matchup in all_matchups:
+            team1, team2 = matchup
+            # print(f"\033[1m\033[96m{team1}\033[0m vs \033[1m\033[93m{team2}\033[0m")
+            _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO7(team1, team2, team_stats)
+
+            # if team1_game_win == 4:
+            #     print(f"\033[1m\033[96m{winner}\033[0m \033[1m{team1_game_win}\033[0m - {team2_game_win} {loser}")
+            # elif team2_game_win == 4:
+            #     print(f"{loser} {team1_game_win} - \033[1m{team2_game_win} \033[93m{winner}\033[0m")
+
+            # Update standings
+            standings[winner]['series_wins'] += 1
+            standings[loser]['series_losses'] += 1
+            standings[winner]['game_wins'] += team1_game_win if winner == team1 else team2_game_win
+            standings[loser]['game_wins'] += team2_game_win if loser == team2 else team1_game_win
+            standings[winner]['game_losses'] += team2_game_win if winner == team1 else team1_game_win
+            standings[loser]['game_losses'] += team1_game_win if loser == team2 else team2_game_win
+            standings[winner]['game_differential'] += team1_game_win - team2_game_win if winner == team1 else team2_game_win - team1_game_win
+            standings[loser]['game_differential'] += team2_game_win - team1_game_win if loser == team2 else team1_game_win - team2_game_win
+
+            # Winner gets added to winning round while loser gets added to losing round
+            playoff_bracket.append(winner)
+            two_wins_one_loss.append(loser)
+
+        # print ("-" * 40)
+        #
+        # # PRINT MATCHUPS FOR 1-1 TEAMS
+        # print(f"{' ': >5}\033[1m\033[4m1-1\033[0m")
+        all_matchups = set_matchups(one_win_one_loss)
+        for matchup in all_matchups:
+            team1, team2 = matchup
+            # print(f"\033[1m\033[96m{team1}\033[0m vs \033[1m\033[93m{team2}\033[0m")
+            _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO7(team1, team2, team_stats)
+
+            # if team1_game_win == 4:
+            #     print(f"\033[1m\033[96m{winner}\033[0m \033[1m{team1_game_win}\033[0m - {team2_game_win} {loser}")
+            # elif team2_game_win == 4:
+            #     print(f"{loser} {team1_game_win} - \033[1m{team2_game_win} \033[93m{winner}\033[0m")
+
+            # Update standings
+            standings[winner]['series_wins'] += 1
+            standings[loser]['series_losses'] += 1
+            standings[winner]['game_wins'] += team1_game_win if winner == team1 else team2_game_win
+            standings[loser]['game_wins'] += team2_game_win if loser == team2 else team1_game_win
+            standings[winner]['game_losses'] += team2_game_win if winner == team1 else team1_game_win
+            standings[loser]['game_losses'] += team1_game_win if loser == team2 else team2_game_win
+            standings[winner]['game_differential'] += team1_game_win - team2_game_win if winner == team1 else team2_game_win - team1_game_win
+            standings[loser]['game_differential'] += team2_game_win - team1_game_win if loser == team2 else team1_game_win - team2_game_win
+
+            # Winner gets added to winning round while loser gets added to losing round
+            two_wins_one_loss.append(winner)
+            one_win_two_losses.append(loser)
+
+        # print ("-" * 40)
+        #
+        # # PRINT MATCHUPS FOR 0-2 TEAMS
+        # print(f"{' ': >5}\033[1m\033[4m0-2\033[0m")
+        all_matchups = set_matchups(zero_wins_two_losses)
+        for matchup in all_matchups:
+            team1, team2 = matchup
+            # print(f"\033[1m\033[96m{team1}\033[0m vs \033[1m\033[93m{team2}\033[0m")
+            _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO7(team1, team2, team_stats)
+
+            # if team1_game_win == 4:
+            #     print(f"\033[1m\033[96m{winner}\033[0m \033[1m{team1_game_win}\033[0m - {team2_game_win} {loser}")
+            # elif team2_game_win == 4:
+            #     print(f"{loser} {team1_game_win} - \033[1m{team2_game_win} \033[93m{winner}\033[0m")
+
+            # Update standings
+            standings[winner]['series_wins'] += 1
+            standings[loser]['series_losses'] += 1
+            standings[winner]['game_wins'] += team1_game_win if winner == team1 else team2_game_win
+            standings[loser]['game_wins'] += team2_game_win if loser == team2 else team1_game_win
+            standings[winner]['game_losses'] += team2_game_win if winner == team1 else team1_game_win
+            standings[loser]['game_losses'] += team1_game_win if loser == team2 else team2_game_win
+            standings[winner]['game_differential'] += team1_game_win - team2_game_win if winner == team1 else team2_game_win - team1_game_win
+            standings[loser]['game_differential'] += team2_game_win - team1_game_win if loser == team2 else team1_game_win - team2_game_win
+
+            # Winner gets added to winning round while loser gets added to losing round
+            one_win_two_losses.append(winner)
+            eliminated_teams.append(loser)
+
+        # Sort teams by series wins, then game differential, then game wins
+        two_wins_one_loss.sort(key=lambda x: (standings[x]['series_wins'], standings[x]['game_differential'], standings[x]['game_wins']), reverse=True)
+        one_win_two_losses.sort(key=lambda x: (standings[x]['series_wins'], standings[x]['game_differential'], standings[x]['game_wins']), reverse=True)
+
+        round_num += 1
+
+    # Print matchups for round 4
+    if round_num == 4:
+        # print("=" * 50)
+        #
+        # # PRINT MATCHUPS FOR 2-1 TEAMS
+        # print(f"\n{' ': >5}\033[1m\033[4m2-1\033[0m")
+        all_matchups = set_matchups(two_wins_one_loss)
+        for matchup in all_matchups:
+            team1, team2 = matchup
+            # print(f"\033[1m\033[96m{team1}\033[0m vs \033[1m\033[93m{team2}\033[0m")
+            _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO7(team1, team2, team_stats)
+
+            # if team1_game_win == 4:
+            #     print(f"\033[1m\033[96m{winner}\033[0m \033[1m{team1_game_win}\033[0m - {team2_game_win} {loser}")
+            # elif team2_game_win == 4:
+            #     print(f"{loser} {team1_game_win} - \033[1m{team2_game_win} \033[93m{winner}\033[0m")
+
+            # Update standings
+            standings[winner]['series_wins'] += 1
+            standings[loser]['series_losses'] += 1
+            standings[winner]['game_wins'] += team1_game_win if winner == team1 else team2_game_win
+            standings[loser]['game_wins'] += team2_game_win if loser == team2 else team1_game_win
+            standings[winner]['game_losses'] += team2_game_win if winner == team1 else team1_game_win
+            standings[loser]['game_losses'] += team1_game_win if loser == team2 else team2_game_win
+            standings[winner]['game_differential'] += team1_game_win - team2_game_win if winner == team1 else team2_game_win - team1_game_win
+            standings[loser]['game_differential'] += team2_game_win - team1_game_win if loser == team2 else team1_game_win - team2_game_win
+
+            # Winner gets added to winning round while loser gets added to losing round
+            playoff_bracket.append(winner)
+            two_wins_two_losses.append(loser)
+
+        # print ("-" * 40)
+        #
+        # # PRINT MATCHUPS FOR 1-2 TEAMS
+        # print(f"{' ': >5}\033[1m\033[4m1-2\033[0m")
+        all_matchups = set_matchups(one_win_two_losses)
+        for matchup in all_matchups:
+            team1, team2 = matchup
+            # print(f"\033[1m\033[96m{team1}\033[0m vs \033[1m\033[93m{team2}\033[0m")
+            _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO7(team1, team2, team_stats)
+
+            # if team1_game_win == 4:
+            #     print(f"\033[1m\033[96m{winner}\033[0m \033[1m{team1_game_win}\033[0m - {team2_game_win} {loser}")
+            # elif team2_game_win == 4:
+            #     print(f"{loser} {team1_game_win} - \033[1m{team2_game_win} \033[93m{winner}\033[0m")
+
+            # Update standings
+            standings[winner]['series_wins'] += 1
+            standings[loser]['series_losses'] += 1
+            standings[winner]['game_wins'] += team1_game_win if winner == team1 else team2_game_win
+            standings[loser]['game_wins'] += team2_game_win if loser == team2 else team1_game_win
+            standings[winner]['game_losses'] += team2_game_win if winner == team1 else team1_game_win
+            standings[loser]['game_losses'] += team1_game_win if loser == team2 else team2_game_win
+            standings[winner]['game_differential'] += team1_game_win - team2_game_win if winner == team1 else team2_game_win - team1_game_win
+            standings[loser]['game_differential'] += team2_game_win - team1_game_win if loser == team2 else team1_game_win - team2_game_win
+
+            # Winner gets added to winning round while loser gets added to losing round
+            two_wins_two_losses.append(winner)
+            eliminated_teams.append(loser)
+
+        # Sort teams by series wins, then series losses , then game differential, then game wins
+        two_wins_two_losses.sort(key=lambda x: (standings[x]['series_wins'], standings[x]['game_differential'], standings[x]['game_wins']), reverse=True)
+
+        round_num += 1
+
+    # Print matchups for round 5
+    if round_num == 5:
+        # print("=" * 50)
+        #
+        # # PRINT MATCHUPS FOR 2-2 TEAMS
+        # print(f"\n{' ': >5}\033[1m\033[4m2-2\033[0m")
+        all_matchups = set_matchups(two_wins_two_losses)
+        for matchup in all_matchups:
+            team1, team2 = matchup
+            # print(f"\033[1m\033[96m{team1}\033[0m vs \033[1m\033[93m{team2}\033[0m")
+            _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO7(team1, team2, team_stats)
+
+            # if team1_game_win == 4:
+            #     print(f"\033[1m\033[96m{winner}\033[0m \033[1m{team1_game_win}\033[0m - {team2_game_win} {loser}")
+            # elif team2_game_win == 4:
+            #     print(f"{loser} {team1_game_win} - \033[1m{team2_game_win} \033[93m{winner}\033[0m")
+
+            # Update standings
+            standings[winner]['series_wins'] += 1
+            standings[loser]['series_losses'] += 1
+            standings[winner]['game_wins'] += team1_game_win if winner == team1 else team2_game_win
+            standings[loser]['game_wins'] += team2_game_win if loser == team2 else team1_game_win
+            standings[winner]['game_losses'] += team2_game_win if winner == team1 else team1_game_win
+            standings[loser]['game_losses'] += team1_game_win if loser == team2 else team2_game_win
+            standings[winner]['game_differential'] += team1_game_win - team2_game_win if winner == team1 else team2_game_win - team1_game_win
+            standings[loser]['game_differential'] += team2_game_win - team1_game_win if loser == team2 else team1_game_win - team2_game_win
+
+            # Winner gets added to winning round while loser gets added to losing round
+            playoff_bracket.append(winner)
+            eliminated_teams.append(loser)
+
+        # Sort teams by series wins, then game differential, then game wins
+        playoff_bracket.sort(key=lambda x: (standings[x]['game_differential'], standings[x]['game_wins']), reverse=True)
+        playoff_bracket.sort(key=lambda x: (standings[x]['series_losses']), reverse=False)
+        playoff_bracket.sort(key=lambda x: (standings[x]['series_wins']), reverse=True)
+
+        eliminated_teams.sort(key=lambda x: (standings[x]['game_differential'], standings[x]['game_wins']), reverse=True)
+        eliminated_teams.sort(key=lambda x: (standings[x]['series_losses']), reverse=False)
+        eliminated_teams.sort(key=lambda x: (standings[x]['series_wins']), reverse=True)
+
+    # print("=" * 50)
+
+    # PRINT STANDINGS
+    # print("\n\033[1m\033[4mSTANDINGS\033[0m")
+    # Print each teams series wins, series losses, game wins, game losses, and game differential
+    # for i in range(len(playoff_bracket)):
+    #     team = playoff_bracket[i]
+    #     if i < 2:
+    #         print(f"{i + 1}. \033[1;35m{team}\033[0m ({standings[team]['series_wins']}-{standings[team]['series_losses']}) ({standings[team]['game_wins']}-{standings[team]['game_losses']}) ({standings[team]['game_differential']})")
+    #     if i >= 2 and i < 5:
+    #         print(f"{i + 1}. \033[1;32m{team}\033[0m ({standings[team]['series_wins']}-{standings[team]['series_losses']}) ({standings[team]['game_wins']}-{standings[team]['game_losses']}) ({standings[team]['game_differential']})")
+    #     if i >= 5 and i < 9:
+    #         print(f"{i + 1}. \033[1;33m{team}\033[0m ({standings[team]['series_wins']}-{standings[team]['series_losses']}) ({standings[team]['game_wins']}-{standings[team]['game_losses']}) ({standings[team]['game_differential']})")
+    #
+    # for i in range(len(eliminated_teams)):
+    #     team = eliminated_teams[i]
+    #     print(f"{i + 9}. \033[1;31m{team}\033[0m ({standings[team]['series_wins']}-{standings[team]['series_losses']}) ({standings[team]['game_wins']}-{standings[team]['game_losses']}) ({standings[team]['game_differential']})")
+
+    return playoff_bracket
+
+def swiss_format_playoffs(teams, team_stats):
+    round_num = 1
+    results = swiss_format(teams, team_stats)
+    teams = [
+        results[0], # 1st place
+        results[7], # 8th place
+        results[3], # 4th place
+        results[4], # 5th place
+        results[1], # 2nd place
+        results[6], # 7th place
+        results[2], # 3rd place
+        results[5]   # 6th place
+    ]
+    remaining_teams = teams
+
+    while len(remaining_teams) > 2:
+        all_matchups = set_matchups(remaining_teams)
+        # if round_num <= 1:
+        #     print(f"\n\033[1m\033[4mQuarter-Finals\033[0m")
+        # elif round_num == 2:
+        #     print(f"\n\033[1m\033[4mSemi-Finals\033[0m")
+
+        for matchup in all_matchups:
+            team1, team2 = matchup
+            # print(f"\033[1m\033[96m{team1}\033[0m vs \033[1m\033[93m{team2}\033[0m")
+            _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO7(team1, team2, team_stats)
+
+            # if team1_game_win == 4:
+            #     print(f"\033[1m\033[96m{winner}\033[0m \033[1m{team1_game_win}\033[0m - {team2_game_win} {loser}")
+            # elif team2_game_win == 4:
+            #     print(f"{loser} {team1_game_win} - \033[1m{team2_game_win} \033[93m{winner}\033[0m")
+
+            # Remove loser and winner from remaining teams list
+            remaining_teams.remove(loser)
+
+        round_num += 1
+
+    # Set Grand Finals matchup
+    team1, team2 = remaining_teams[0], remaining_teams[1]
+    # print(f"\n\033[1m\033[4mGrand Finals\033[0m")
+    # print(f"\033[1m\033[96m{team1}\033[0m vs \033[1m\033[93m{team2}\033[0m")
+    _, _, team1_game_win, team2_game_win, winner, loser = simulate_series_BO7(team1, team2, team_stats)
+
+    # if team1_game_win == 4:
+    #     print(f"\033[1m\033[96m{winner}\033[0m \033[1m{team1_game_win}\033[0m - {team2_game_win} {loser}")
+    #     print(f"\nWinner: \033[1m\033[96m {winner}\033[0m")
+    # elif team2_game_win == 4:
+    #     print(f"{loser} {team1_game_win} - \033[1m{team2_game_win} \033[93m{winner}\033[0m")
+    #     print(f"\nWinner: \033[1m\033[93m {winner}\033[0m")
+
+    return winner
+
+def simulate_multiple_swiss_format(teams, team_stats):
+    num_iterations = int(input("Number of iterations: "))
+    tournaments_done = 0
+    total_wins = {teams: 0 for teams in teams}
+
+    for _ in range(num_iterations):
+        winner = swiss_format_playoffs(teams, team_stats)
+        total_wins[winner] += 1
+        tournaments_done += 1
+        print(f"\rTournaments Done: {tournaments_done}/{num_iterations}", end="")
+    print()
+
+    win_percentages = {team: (wins / num_iterations) * 100 for team, wins in total_wins.items()}
+
+    # Sort the win percentages in descending order
+    sorted_win_percentages = sorted(win_percentages.items(), key=lambda x: x[1], reverse=True)
+
+    print("\nWin Percentages: ")
+    for team, win_percentage in sorted_win_percentages:
+        tourney_wins = total_wins[team]
+        print(f"{team}: {win_percentage:.2f}% ({tourney_wins} wins)")
+
 def main():
     # Read team data from CSV file
-    csv_file = 'C:/Users/nycdoe/PycharmProjects/RLCS_Simulation/RLCSsheet.csv'
+    csv_file = 'C:/Users/maxim/PycharmProjects/RLCS_Simulation/RLCSsheet.csv'
     team_stats = read_team_data(csv_file)
+    order_rankings_csv = 'C:/Users/maxim/PycharmProjects/RLCS_Simulation/rankings.csv'
+    ordered_teams = get_ordered_teams_from_csv(order_rankings_csv)
 
     # Get user selection
     selection = input("(1) Simulate a BO7 series\n"
                                  "(2) Rank all teams\n"
-                                 "(3) Simulate 16-team SINGLE elimination tournament\n"
-                                 "(4) Simulate 16-team DOUBLE elimination tournament\n"
-                                 "(5) Simulate 16-team group stage\n\n"
+                                 "(3) SINGLE ELIMINATION\n"
+                                 "(4) DOUBLE ELIMINATION\n"
+                                 "(5) GROUPS\n"
+                                 "(6) SWISS\n\n"
                                  "Selection: ")
 
     if selection == '1':
@@ -695,16 +1130,13 @@ def main():
         simulate_single_elim_tournament(teams, team_stats)
 
     elif selection == '4':
-        file_path = 'C:/Users/nycdoe/PycharmProjects/RLCS_Simulation/rankings.xlsx'
-        ordered_teams = get_ordered_teams_from_excel(file_path)
-
         simulate_double_elim_tournament_multiple_times(ordered_teams, team_stats)
 
     elif selection == '5':
-        file_path = 'C:/Users/nycdoe/PycharmProjects/RLCS_Simulation/rankings.xlsx'
-        ordered_teams = get_ordered_teams_from_excel(file_path)
-
         simulate_multiple_group_stage_playoffs(ordered_teams, team_stats)
+
+    elif selection == '6':
+        simulate_multiple_swiss_format(ordered_teams, team_stats)
 
 if __name__ == "__main__":
     main()
