@@ -2,7 +2,6 @@ import csv
 import random
 import pandas as pd
 import openpyxl as op
-from tabulate import tabulate
 
 def get_team_names(csv_file):
     team_names = []
@@ -82,10 +81,10 @@ def read_team_data(csv_file):
 
             # Increase Uncertainty for teams from the 'ME' region
             if 'Region' in row and row['Region'] == 'ME':
-                team_stats[team]['Uncertainty'] += 0.01
+                team_stats[team]['Uncertainty'] += 0.015
 
             if 'Region' in row and row['Region'] == 'SAM':
-                team_stats[team]['Uncertainty'] += 0.01
+                team_stats[team]['Uncertainty'] += 0.010
 
     # Calculate average stats for each team
     for team in team_stats:
@@ -93,7 +92,7 @@ def read_team_data(csv_file):
         for stat in ['Goals', 'Assists', 'Saves', 'Shots', 'Uncertainty']:
             if team_stats[team]['Players'] > 0:  # Check to avoid division by zero
                 team_stats[team][stat] /= team_stats[team]['Players']
-               #  print(f"\t{stat}: {team_stats[team][stat]:.3f}")  # Formatting numbers to three decimal places
+                # print(f"\t{stat}: {team_stats[team][stat]:.3f}")  # Formatting numbers to three decimal places
             else:
                 print(f"  No players found for {team}, unable to calculate averages.")
         # print("-" * 30)
@@ -132,21 +131,24 @@ def write_rankings_to_csv(composite_scores, team_names):
     # Write the DataFrame to a CSV file
     df.to_csv('rankings.csv', index=False)
 
-    # Use tabulate to print the DataFrame
-    print(tabulate(df, headers='keys', tablefmt='psql', showindex=False, floatfmt=".3f"))
+    print(df.to_string(index=False))
 
 def simulate_game(team1, team2, team_stats):
     # Base score calculation
-    base_score_team1 = (team_stats[team1]['Goals'] / team_stats[team1]['Shots']) * 0.85 + team_stats[team1]['Assists'] * 0.1 - team_stats[team2]['Saves'] * 0.05
-    base_score_team2 = (team_stats[team2]['Goals'] / team_stats[team2]['Shots']) * 0.85 + team_stats[team2]['Assists'] * 0.1 - team_stats[team1]['Saves'] * 0.05
+    base_score_team1 = (team_stats[team1]['Goals'] / team_stats[team1]['Shots']) * 0.9 + team_stats[team1]['Assists'] * 0.065 - team_stats[team2]['Saves'] * 0.035
+    base_score_team2 = (team_stats[team2]['Goals'] / team_stats[team2]['Shots']) * 0.9 + team_stats[team2]['Assists'] * 0.065 - team_stats[team1]['Saves'] * 0.035
+
+    # Random variation based on Base score calculation
+    score_variation_team1 = random.uniform(base_score_team1*0.85, base_score_team1*1.05)
+    score_variation_team2 = random.uniform(base_score_team2*0.85, base_score_team2*1.05)
 
     # Random variation based on Uncertainty
-    variation_team1 = random.uniform(team_stats[team1]['Uncertainty']*0.20, team_stats[team1]['Uncertainty'] * 0.8)
-    variation_team2 = random.uniform(team_stats[team2]['Uncertainty']*0.20, team_stats[team2]['Uncertainty'] * 0.8)
+    variation_team1 = random.uniform(team_stats[team1]['Uncertainty']*0.25, team_stats[team1]['Uncertainty']*0.85)
+    variation_team2 = random.uniform(team_stats[team2]['Uncertainty']*0.25, team_stats[team2]['Uncertainty']*0.85)
 
     # Final score calculation with reduced random variation and minimum threshold
-    team1_score = random.uniform(50*(base_score_team1 - variation_team1), 100*(base_score_team1 - variation_team1))
-    team2_score = random.uniform(50*(base_score_team2 - variation_team2), 100*(base_score_team2 - variation_team2))
+    team1_score = random.uniform(50*(score_variation_team1 - variation_team1), 100*(score_variation_team1 - variation_team1))
+    team2_score = random.uniform(50*(score_variation_team2 - variation_team2), 100*(score_variation_team2 - variation_team2))
 
     # # Print results
     # if team1_score > team2_score:
@@ -413,7 +415,7 @@ def simulate_double_elim_tournament_multiple_times(teams, team_stats):
     print("\nWin Percentages: ")
     for team, win_percentage in sorted_win_percentages:
         tourney_wins = total_wins[team]
-        print(f"{team}: {win_percentage:.2f}% ({tourney_wins} wins)")
+        print(f"{team:<7.5} {win_percentage:.2f}% ({tourney_wins} wins)")
 
 def group_stage(teams, team_stats):
     group_a, group_b, group_c, group_d = [], [], [], []
@@ -657,7 +659,7 @@ def simulate_multiple_group_stage_playoffs(teams, team_stats):
     print("\nWin Percentages: ")
     for team, win_percentage in sorted_win_percentages:
         tourney_wins = total_wins[team]
-        print(f"{team}: {win_percentage:.2f}% ({tourney_wins} wins)")
+        print(f"{team:<7.5} {win_percentage:.2f}% ({tourney_wins} wins)")
 
 def swiss_format(teams, team_stats):
     round_num = 1
@@ -1086,7 +1088,7 @@ def simulate_multiple_swiss_format(teams, team_stats):
     print("\nWin Percentages: ")
     for team, win_percentage in sorted_win_percentages:
         tourney_wins = total_wins[team]
-        print(f"{team}: {win_percentage:.2f}% ({tourney_wins} wins)")
+        print(f"{team:<7.5} {win_percentage:.2f}% ({tourney_wins} wins)")
 
 def main():
     # Read team data from CSV file
